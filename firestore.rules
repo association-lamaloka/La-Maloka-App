@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Classes list: Publicly readable by all visitors, writable by app/admin
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Global site settings: Publicly readable for titles, texts & banners
+    match /site_settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Inscriptions: Anyone can submit an inscription, admin can read/manage all
+    match /inscriptions/{inscriptionId} {
+      allow read, write: if true;
+    }
+    
+    // Health forms: Anyone can submit QS-Sport signature, admin can read
+    match /health_forms/{formId} {
+      allow read, write: if true;
+    }
+  }
+}

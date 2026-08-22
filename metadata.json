@@ -1,0 +1,6 @@
+{
+  "name": "La Maloka",
+  "description": "Asociación de Baile Tropical - Gestión de inscripciones, calendario, galería, material exclusivo y pagos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
