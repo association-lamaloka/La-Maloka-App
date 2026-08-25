@@ -1028,107 +1028,169 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
         {/* MODAL 2: INFORMATIVE COURSE DETAILS MODAL (MODE INFO)   */}
         {/* ======================================================= */}
         <AnimatePresence>
-          {selectedInfoClass && (
-            <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-              <motion.div
-                id="info-class-modal-container"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-zinc-800 max-w-lg w-full p-6 md:p-8 text-left"
-              >
-                <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                  <div className="space-y-1">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300">
-                      Fiche Information Cours • Saison 2026 - 2027
-                    </span>
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                      {selectedInfoClass.name}
-                    </h3>
+          {selectedInfoClass && (() => {
+            const helloAssoLink = selectedInfoClass.helloAssoUrl && selectedInfoClass.helloAssoUrl !== 'https://www.helloasso.com/associations/la-maloka'
+              ? selectedInfoClass.helloAssoUrl
+              : selectedInfoClass.id === 'c-essai-salsa-2026' || selectedInfoClass.name.toLowerCase().includes('essai')
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cours-d-essai-salsa-cubaine-vendredi-11-septembre-2026-20-heures'
+              : selectedInfoClass.id === 'c-salsa-flf-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('salsa') && selectedInfoClass.name.toLowerCase().includes('débutant'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
+              : selectedInfoClass.id === 'c-salsa-flf-21h-2026' || (selectedInfoClass.name.toLowerCase().includes('salsa') && (selectedInfoClass.name.toLowerCase().includes('inter') || selectedInfoClass.name.toLowerCase().includes('21h')))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
+              : selectedInfoClass.id === 'c-cardio-lqy-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && (selectedInfoClass.name.toLowerCase().includes('queue') || selectedInfoClass.name.toLowerCase().includes('mardi')))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
+              : selectedInfoClass.id === 'c-cardio-flf-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && selectedInfoClass.name.toLowerCase().includes('20h'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
+              : selectedInfoClass.id === 'c-cardio-flf-21h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && selectedInfoClass.name.toLowerCase().includes('21h'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
+              : selectedInfoClass.helloAssoUrl || 'https://www.helloasso.com/associations/la-maloka';
+
+            const isTrial = selectedInfoClass.isTrialClass || selectedInfoClass.id === 'c-essai-salsa-2026' || selectedInfoClass.name.toLowerCase().includes('essai');
+
+            return (
+              <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                <motion.div
+                  id="info-class-modal-container"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="relative bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-zinc-800 max-w-lg w-full p-6 md:p-8 text-left"
+                >
+                  <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="space-y-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                        Fiche Information Cours • Saison 2026 - 2027
+                      </span>
+                      <h3 className="text-xl font-black text-zinc-900 dark:text-white">
+                        {selectedInfoClass.name}
+                      </h3>
+                    </div>
+                    <button
+                      id="close-info-class-modal-btn"
+                      onClick={() => setSelectedInfoClass(null)}
+                      className="p-2 bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 rounded-full transition-colors cursor-pointer"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                  <button
-                    id="close-info-class-modal-btn"
-                    onClick={() => setSelectedInfoClass(null)}
-                    className="p-2 bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 rounded-full transition-colors cursor-pointer"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
 
-                <div className="py-4 space-y-4">
-                  {/* Key Info Cards */}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
-                      <p className="text-[10px] text-zinc-500 uppercase font-bold">Discipline & Niveau</p>
-                      <p className="text-xs font-black text-zinc-900 dark:text-white mt-0.5">{selectedInfoClass.category || 'Danse'}</p>
-                      <p className="text-[11px] text-rose-500 font-semibold">{selectedInfoClass.level}</p>
-                    </div>
+                  <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                    {/* Key Info Cards */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold">Discipline & Niveau</p>
+                        <p className="text-xs font-black text-zinc-900 dark:text-white mt-0.5">{selectedInfoClass.category || 'Danse'}</p>
+                        <p className="text-[11px] text-rose-500 font-semibold">{selectedInfoClass.level}</p>
+                      </div>
 
-                    <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
-                      <p className="text-[10px] text-zinc-500 uppercase font-bold">Tarif Officiel</p>
-                      <p className="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
-                        {selectedInfoClass.annualPrice ? `${selectedInfoClass.annualPrice} € / an` : `${selectedInfoClass.priceMonthly} € / m`}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">Paiement 3x possible</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Clock size={15} className="text-orange-500 shrink-0" />
-                      <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.schedule}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs">
-                      <MapPin size={15} className="text-rose-500 shrink-0" />
-                      <div>
-                        <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.location}</span>
-                        <span className="text-zinc-500 block text-[11px]">{selectedInfoClass.roomName || 'Salle dédiée'}</span>
+                      <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold">Tarif Officiel</p>
+                        <p className="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
+                          {isTrial ? 'Gratuit (Séance d\'essai)' : selectedInfoClass.annualPrice ? `${selectedInfoClass.annualPrice} € / an` : `${selectedInfoClass.priceMonthly} € / m`}
+                        </p>
+                        <p className="text-[10px] text-zinc-500">{isTrial ? 'Sans engagement' : 'Paiement 3x possible'}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs">
-                      <Users size={15} className="text-emerald-500 shrink-0" />
-                      <span className="text-zinc-700 dark:text-zinc-300">Professeur : <strong>{selectedInfoClass.instructor || 'Yasmilka Valdés & Équipe'}</strong></span>
+                    <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
+                      <div className="flex items-center gap-2 text-xs">
+                        <Clock size={15} className="text-orange-500 shrink-0" />
+                        <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.schedule}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs">
+                        <MapPin size={15} className="text-rose-500 shrink-0" />
+                        <div>
+                          <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.location}</span>
+                          <span className="text-zinc-500 block text-[11px]">{selectedInfoClass.roomName || 'Salle dédiée'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs">
+                        <Users size={15} className="text-emerald-500 shrink-0" />
+                        <span className="text-zinc-700 dark:text-zinc-300">Professeur : <strong>{selectedInfoClass.instructor || 'Yasmilka Valdés & Équipe'}</strong></span>
+                      </div>
                     </div>
-                  </div>
 
-                  {selectedInfoClass.description && (
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                      {selectedInfoClass.description}
-                    </p>
-                  )}
-
-                  {/* Informative Note */}
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-                    <Info size={18} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                    <div>
-                      <p className="font-bold">Inscriptions en ligne désactivées pour cette saison</p>
-                      <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5">
-                        Le site est en mode informatif. Venez nous rencontrer lors des forums des associations ou contactez-nous directement pour vos questions.
+                    {selectedInfoClass.description && (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                        {selectedInfoClass.description}
                       </p>
-                    </div>
-                  </div>
-                </div>
+                    )}
 
-                <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-                  <a
-                    href="mailto:association.lamaloka@gmail.com"
-                    className="flex-1 py-3 text-center bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md inline-flex items-center justify-center gap-2"
-                  >
-                    <Mail size={14} />
-                    <span>Contacter par Email</span>
-                  </a>
-                  <button
-                    onClick={() => setSelectedInfoClass(null)}
-                    className="px-5 py-3 text-center bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-semibold rounded-2xl text-xs transition-colors cursor-pointer"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
+                    {/* DEDICATED HELLOASSO ADHESION CARD */}
+                    {helloAssoLink && (
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/30 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <h4 className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                              Adhésion & Inscription en Ligne Ouverte
+                            </h4>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 font-bold border border-emerald-500/30">
+                            HelloAsso
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed">
+                          {isTrial 
+                            ? "Réservez votre place gratuite pour le cours d'essai directement sur notre billetterie HelloAsso." 
+                            : "Finalisez votre inscription et réglez votre adhésion en toute sécurité (paiement sécurisé en 1x ou 3x) sur la page HelloAsso officielle du cours."}
+                        </p>
+
+                        <a
+                          id={`helloasso-direct-btn-${selectedInfoClass.id}`}
+                          href={helloAssoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer hover:shadow-lg hover:shadow-emerald-500/25"
+                        >
+                          <span>👉 S'inscrire / Adhérer sur HelloAsso</span>
+                          <ExternalLink size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        </a>
+
+                        <div className="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400 break-all font-mono bg-white/60 dark:bg-black/40 p-2 rounded-lg border border-emerald-500/20">
+                          <span className="font-bold text-zinc-700 dark:text-zinc-300 block mb-0.5">Lien HelloAsso :</span>
+                          <a href={helloAssoLink} target="_blank" rel="noopener noreferrer" className="text-emerald-700 dark:text-emerald-400 hover:underline">
+                            {helloAssoLink}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-2.5">
+                    {helloAssoLink && (
+                      <a
+                        id={`modal-footer-helloasso-btn-${selectedInfoClass.id}`}
+                        href={helloAssoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-3 text-center bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md inline-flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ExternalLink size={14} />
+                        <span>Ouvrir HelloAsso</span>
+                      </a>
+                    )}
+                    <a
+                      href="mailto:association.lamaloka@gmail.com"
+                      className="py-3 px-4 text-center bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md inline-flex items-center justify-center gap-2"
+                    >
+                      <Mail size={14} />
+                      <span>Email</span>
+                    </a>
+                    <button
+                      onClick={() => setSelectedInfoClass(null)}
+                      className="px-5 py-3 text-center bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-semibold rounded-2xl text-xs transition-colors cursor-pointer"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()}
         </AnimatePresence>
 
         {/* ======================================================= */}

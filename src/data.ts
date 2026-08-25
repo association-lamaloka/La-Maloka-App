@@ -87,7 +87,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Gymnase du Levant - Grande Salle Polyvalente',
     maxSpots: 35,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cours-d-essai-salsa-cubaine-vendredi-11-septembre-2026-20-heures'
   },
   {
     id: 'c-cardio-lqy-20h-2026',
@@ -97,14 +97,14 @@ export const DANCE_CLASSES: DanceClass[] = [
     level: 'Tous Niveaux',
     description: 'Cours hebdomadaire complet de Cardio Latino à La Queue-lez-Yvelines. Musiques festives, travail cardio-vasculaire sans sauts traumatisants, renforcement et bonne humeur garantie.',
     priceMonthly: 30,
-    annualPrice: 190,
+    annualPrice: 210,
     image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600',
     category: 'Cardio Latino',
     location: 'La Queue-les-Yvelines',
     active: true,
     season: 'Saison 2026 - 2027',
     campaignType: 'Cours Annuel',
-    visibility: 'Privé',
+    visibility: 'Public',
     subscribersCount: 9,
     collectedAmount: 1260,
     daysRemaining: 320,
@@ -112,17 +112,17 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Salle Polyvalente & Fêtes de La Queue-lez-Yvelines',
     maxSpots: 30,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
   },
   {
     id: 'c-salsa-flf-21h-2026',
     name: 'SALSA CUBAINE Inter/Avancé Saison 2026 - 2027 Cours à 21h Fontenay le Fleury (2)',
     instructor: 'Yasmilka "La Gozadera" Valdés',
-    schedule: 'Lundi 21:00 - 22:00',
+    schedule: 'Vendredi 21:00 - 22:00',
     level: 'Intermédiaire',
     description: 'Perfectionnement du style cubain (Casino), jeux de bras, musicalité afro-cubaine, son, timba et figures dynamiques en rueda de casino à Fontenay-le-Fleury.',
     priceMonthly: 35,
-    annualPrice: 220,
+    annualPrice: 198,
     image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&q=80&w=600',
     category: 'Salsa Cubaine',
     location: 'Fontenay-le-Fleury',
@@ -137,17 +137,17 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Gymnase du Levant - Salle de Danse Annexe',
     maxSpots: 28,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
   },
   {
     id: 'c-salsa-flf-20h-2026',
     name: 'SALSA CUBAINE Débutant Saison 2026 - 2027 Cours à 20h Fontenay le Fleury',
     instructor: 'Yasmilka "La Gozadera" Valdés',
-    schedule: 'Lundi 20:00 - 21:00',
+    schedule: 'Vendredi 20:00 - 21:00',
     level: 'Débutant',
     description: 'Apprenez les pas de base de la Salsa Cubaine, le guidage, l\'écoute rythmique (clave cubaine), les tours fondamentaux et les premières passes de Rueda.',
     priceMonthly: 35,
-    annualPrice: 220,
+    annualPrice: 198,
     image: 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=600',
     category: 'Salsa Cubaine',
     location: 'Fontenay-le-Fleury',
@@ -162,7 +162,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Gymnase du Levant - Grande Salle Polyvalente',
     maxSpots: 30,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
   },
   {
     id: 'c-cardio-flf-20h-2026',
@@ -172,14 +172,14 @@ export const DANCE_CLASSES: DanceClass[] = [
     level: 'Tous Niveaux',
     description: 'Créneau Cardio Latino du jeudi à 20h à Fontenay-le-Fleury. Rythmes endiablés, ambiance positive, dépense énergétique et chorégraphies latines sans partenaire.',
     priceMonthly: 30,
-    annualPrice: 190,
+    annualPrice: 198,
     image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=600',
     category: 'Cardio Latino',
     location: 'Fontenay-le-Fleury',
     active: true,
     season: 'Saison 2026 - 2027',
     campaignType: 'Cours Annuel',
-    visibility: 'Privé',
+    visibility: 'Public',
     subscribersCount: 26,
     collectedAmount: 3326,
     daysRemaining: 318,
@@ -187,7 +187,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Gymnase des Chenevières - Salle d\'Évolution',
     maxSpots: 30,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   },
   {
     id: 'c-cardio-flf-21h-2026',
@@ -197,14 +197,14 @@ export const DANCE_CLASSES: DanceClass[] = [
     level: 'Tous Niveaux',
     description: 'Créneau Cardio Latino du jeudi à 21h à Fontenay-le-Fleury. Séance nocturne dynamique pour décompresser en musique et tonifier le corps.',
     priceMonthly: 30,
-    annualPrice: 190,
+    annualPrice: 198,
     image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600',
     category: 'Cardio Latino',
     location: 'Fontenay-le-Fleury',
     active: true,
     season: 'Saison 2026 - 2027',
     campaignType: 'Cours Annuel',
-    visibility: 'Privé',
+    visibility: 'Public',
     subscribersCount: 9,
     collectedAmount: 862,
     daysRemaining: 318,
@@ -212,7 +212,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomName: 'Gymnase des Chenevières - Salle d\'Évolution',
     maxSpots: 30,
     waitlistCount: 0,
-    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka'
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   }
 ];
 
@@ -391,7 +391,8 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
     notes: 'Cours complet de Cardio Latino, renforcement musculaire et ambiance festive.',
     badge: 'La Queue-lez-Yvelines',
     active: true,
-    classId: 'c-cardio-lqy-20h-2026'
+    classId: 'c-cardio-lqy-20h-2026',
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
   },
   {
     id: 'price-cardio-flf-jeudi-20h',
@@ -407,7 +408,8 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
     notes: 'Session dynamique cardio-danse latino à Fontenay-le-Fleury.',
     badge: 'Fontenay-le-Fleury',
     active: true,
-    classId: 'c-cardio-flf-20h-2026'
+    classId: 'c-cardio-flf-20h-2026',
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   },
   {
     id: 'price-cardio-flf-jeudi-21h',
@@ -423,7 +425,8 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
     notes: 'Deuxième créneau Cardio Latino pour s\'adapter à tous les emplois du temps.',
     badge: 'Fontenay-le-Fleury',
     active: true,
-    classId: 'c-cardio-flf-20h-2026'
+    classId: 'c-cardio-flf-21h-2026',
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   },
   {
     id: 'price-salsa-flf-vendredi-20h',
@@ -439,7 +442,8 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
     notes: 'Apprentissage des bases du guidage cubain, pasitos, clave et rueda de casino.',
     badge: 'Idéal Débutants',
     active: true,
-    classId: 'c-salsa-flf-20h-2026'
+    classId: 'c-salsa-flf-20h-2026',
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
   },
   {
     id: 'price-salsa-flf-vendredi-21h',
@@ -455,7 +459,8 @@ export const DEFAULT_PRICING_PLANS: PricingPlan[] = [
     notes: 'Figures complexes, styling, musicalité, shines et ruedas avec Yasmilka Valdés.',
     badge: 'Perfectionnement',
     active: true,
-    classId: 'c-salsa-flf-21h-2026'
+    classId: 'c-salsa-flf-21h-2026',
+    helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
   }
 ];
 

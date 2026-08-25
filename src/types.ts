@@ -124,6 +124,7 @@ export interface PricingPlan {
   badge?: string;
   active?: boolean;
   classId?: string;
+  helloAssoUrl?: string;
 }
 
 export interface GeneralConditionSection {
