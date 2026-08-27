@@ -34,10 +34,12 @@ export interface DanceClass {
   season?: string; // e.g. 'Saison 2026 - 2027'
   campaignType?: 'Cours Annuel' | "Cours d'essai" | 'Stage' | string;
   visibility?: 'Public' | 'Privé' | 'Archivé' | string;
-  subscribersCount?: number; // Adhérents inscrits
+  subscribersCount?: number; // Adhérents inscrits (HelloAsso)
+  spotsRemaining?: number; // Plazas disponibles restantes (maxSpots - subscribersCount)
   collectedAmount?: number; // Montant collecté en €
   daysRemaining?: number; // Nombre de jours restants
   helloAssoUrl?: string; // Lien direct HelloAsso
+  lastHelloAssoSync?: string; // Horodatage de la dernière synchronisation
   trialDate?: string; // Pour les cours d'essai (ex: 11 septembre 2026)
   isTrialClass?: boolean;
 }
@@ -139,6 +141,10 @@ export interface GeneralConditionsData {
   lastUpdated: string;
   subtitle: string;
   sections: GeneralConditionSection[];
+  pdfUrl?: string;
+  pdfFileName?: string;
+  pdfFileSize?: string;
+  pdfUploadDate?: string;
 }
 
 export interface RegistrationInfo {

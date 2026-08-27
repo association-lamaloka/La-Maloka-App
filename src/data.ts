@@ -86,6 +86,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomId: 'room-levant-polyvalente',
     roomName: 'Gymnase du Levant - Grande Salle Polyvalente',
     maxSpots: 35,
+    spotsRemaining: 29,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cours-d-essai-salsa-cubaine-vendredi-11-septembre-2026-20-heures'
   },
@@ -111,6 +112,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomId: 'room-lqy-fetes',
     roomName: 'Salle Polyvalente & Fêtes de La Queue-lez-Yvelines',
     maxSpots: 30,
+    spotsRemaining: 21,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
   },
@@ -136,6 +138,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomId: 'room-levant-danse',
     roomName: 'Gymnase du Levant - Salle de Danse Annexe',
     maxSpots: 28,
+    spotsRemaining: 19,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
   },
@@ -155,12 +158,13 @@ export const DANCE_CLASSES: DanceClass[] = [
     season: 'Saison 2026 - 2027',
     campaignType: 'Cours Annuel',
     visibility: 'Public',
-    subscribersCount: 3,
+    subscribersCount: 4,
     collectedAmount: 166,
-    daysRemaining: 318,
+    daysRemaining: 307,
     roomId: 'room-levant-polyvalente',
     roomName: 'Gymnase du Levant - Grande Salle Polyvalente',
     maxSpots: 30,
+    spotsRemaining: 26,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
   },
@@ -186,6 +190,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomId: 'room-chenevieres-evolution',
     roomName: 'Gymnase des Chenevières - Salle d\'Évolution',
     maxSpots: 30,
+    spotsRemaining: 4,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   },
@@ -211,6 +216,7 @@ export const DANCE_CLASSES: DanceClass[] = [
     roomId: 'room-chenevieres-evolution',
     roomName: 'Gymnase des Chenevières - Salle d\'Évolution',
     maxSpots: 30,
+    spotsRemaining: 21,
     waitlistCount: 0,
     helloAssoUrl: 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
   }

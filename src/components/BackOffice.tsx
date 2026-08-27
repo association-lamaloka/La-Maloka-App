@@ -73,6 +73,23 @@ export const compressAndProcessImage = (file: File, callback: (result: string) =
   };
   reader.readAsDataURL(file);
 };
+
+/**
+ * Reads any uploaded PDF file into a Data URL with formatted file size and original file name.
+ */
+export const processPdfFile = (
+  file: File,
+  callback: (dataUrl: string, fileName: string, fileSize: string) => void
+) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target?.result as string;
+    const sizeInMb = (file.size / (1024 * 1024)).toFixed(2);
+    const sizeFormatted = file.size >= 1024 * 1024 ? `${sizeInMb} Mo` : `${Math.round(file.size / 1024)} Ko`;
+    callback(dataUrl, file.name, sizeFormatted);
+  };
+  reader.readAsDataURL(file);
+};
 import { DanceClass, DanceEvent, Inscription, HealthForm, SiteSettings, HomepageVignette, RegistrationInfo, DanceRoom, PhotoItem, VideoItem, PricingPlan, GeneralConditionsData, GeneralConditionSection } from '../types';
 import { DEFAULT_SITE_SETTINGS, DANCE_CLASSES, DANCE_EVENTS, DEFAULT_ROOMS, PHOTO_GALLERY, DEFAULT_VIDEOS, DEFAULT_PRICING_PLANS, DEFAULT_GENERAL_CONDITIONS } from '../data';
 import { InstagramQRModal } from './InstagramQRModal';
@@ -587,6 +604,69 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
     }
   };
 
+  const handleUploadConditionsPdf = (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+      alert('Veuillez sélectionner un fichier au format PDF valide (.pdf).');
+      return;
+    }
+    processPdfFile(file, (dataUrl, fileName, fileSize) => {
+      const currentCond = settingsForm.generalConditions || DEFAULT_GENERAL_CONDITIONS;
+      const today = new Date().toLocaleDateString('fr-FR');
+      const newSettings: SiteSettings = {
+        ...settingsForm,
+        generalConditions: {
+          ...currentCond,
+          pdfUrl: dataUrl,
+          pdfFileName: fileName,
+          pdfFileSize: fileSize,
+          pdfUploadDate: today
+        }
+      };
+      setSettingsForm(newSettings);
+      setSiteSettings(newSettings);
+      localStorage.setItem('maloka_site_settings', JSON.stringify(newSettings));
+      saveSiteSettingsToCloud(newSettings).catch(err => console.error('Firestore settings save error:', err));
+      addNotification('PDF du Règlement Ajouté 📄', `Le fichier "${fileName}" (${fileSize}) a été téléchargé et lié aux conditions générales.`, 'alerta');
+    });
+  };
+
+  const handleRemoveConditionsPdf = () => {
+    if (confirm('Voulez-vous retirer le document PDF des conditions générales ?')) {
+      const currentCond = settingsForm.generalConditions || DEFAULT_GENERAL_CONDITIONS;
+      const newSettings: SiteSettings = {
+        ...settingsForm,
+        generalConditions: {
+          ...currentCond,
+          pdfUrl: undefined,
+          pdfFileName: undefined,
+          pdfFileSize: undefined,
+          pdfUploadDate: undefined
+        }
+      };
+      setSettingsForm(newSettings);
+      setSiteSettings(newSettings);
+      localStorage.setItem('maloka_site_settings', JSON.stringify(newSettings));
+      saveSiteSettingsToCloud(newSettings).catch(err => console.error('Firestore settings save error:', err));
+      addNotification('PDF Retiré 🗑️', 'Le document PDF a été supprimé des conditions générales.', 'alerta');
+    }
+  };
+
+  const handleUpdateConditionsPdfUrl = (url: string) => {
+    const currentCond = settingsForm.generalConditions || DEFAULT_GENERAL_CONDITIONS;
+    const newSettings: SiteSettings = {
+      ...settingsForm,
+      generalConditions: {
+        ...currentCond,
+        pdfUrl: url,
+        pdfFileName: url ? (currentCond.pdfFileName || 'Reglement_Interieur_La_Maloka.pdf') : undefined,
+        pdfUploadDate: url ? new Date().toLocaleDateString('fr-FR') : undefined
+      }
+    };
+    setSettingsForm(newSettings);
+    setSiteSettings(newSettings);
+    localStorage.setItem('maloka_site_settings', JSON.stringify(newSettings));
+  };
+
   // --- CAMPAIGNS & INSCRIPTIONS MANAGEMENT ---
   const handleOpenAddCampaign = () => {
     setEditingCampaignId(null);
@@ -707,26 +787,47 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
   };
 
   const handleToggleCampaignVisibility = (id: string) => {
+    let newStatus = 'Public';
+    let targetName = '';
     const updated = classes.map((c) => {
       if (c.id === id) {
         const newVis = c.visibility === 'Public' ? 'Privé' : 'Public';
+        newStatus = newVis;
+        targetName = c.name;
         return { ...c, visibility: newVis };
       }
       return c;
     });
     setClasses(updated);
     localStorage.setItem('maloka_classes', JSON.stringify(updated));
+    saveClassesToCloud(updated).catch((err) => console.error('Firestore saveClasses error:', err));
+    addNotification(
+      newStatus === 'Public' ? 'Inscriptions Ouvertes 🟢' : 'Inscriptions Fermées 🔒',
+      `Le cours "${targetName || 'Sélectionné'}" est maintenant en statut ${newStatus}. Les inscriptions en ligne sont ${newStatus === 'Public' ? 'ouvertes au public' : 'désactivées / fermées'}.`,
+      'clase'
+    );
   };
 
   const handleToggleCampaignActive = (id: string) => {
+    let newActive = true;
+    let targetName = '';
     const updated = classes.map((c) => {
       if (c.id === id) {
-        return { ...c, active: c.active === false ? true : false };
+        const toggled = c.active === false ? true : false;
+        newActive = toggled;
+        targetName = c.name;
+        return { ...c, active: toggled };
       }
       return c;
     });
     setClasses(updated);
     localStorage.setItem('maloka_classes', JSON.stringify(updated));
+    saveClassesToCloud(updated).catch((err) => console.error('Firestore saveClasses error:', err));
+    addNotification(
+      newActive ? 'Cours Activé 🟢' : 'Cours Désactivé ⏸️',
+      `Le cours "${targetName || 'Sélectionné'}" est maintenant ${newActive ? 'actif' : 'désactivé'}.`,
+      'clase'
+    );
   };
 
   const handleDeleteCampaign = (id: string, name: string) => {
@@ -734,6 +835,7 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
       const updated = classes.filter((c) => c.id !== id);
       setClasses(updated);
       localStorage.setItem('maloka_classes', JSON.stringify(updated));
+      saveClassesToCloud(updated).catch((err) => console.error('Firestore saveClasses error:', err));
       addNotification('Campagne Retirée 🗑️', `La campagne "${name}" a été supprimée.`, 'alerta');
     }
   };
@@ -2949,9 +3051,16 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                   </div>
 
                   <div className="p-3.5 bg-zinc-950/60 border border-zinc-800 rounded-2xl">
-                    <span className="text-[10px] text-zinc-500 uppercase font-bold block">Total Adhérents Inscrits</span>
+                    <span className="text-[10px] text-zinc-500 uppercase font-bold block">Total Adhérents HelloAsso</span>
                     <span className="text-xl font-black text-emerald-400 mt-1 block">
-                      {classes.reduce((acc, c) => acc + (c.subscribersCount || 0), 0)} adhérents
+                      {classes.reduce((acc, c) => acc + (c.subscribersCount || 0), 0)} inscrits
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 bg-zinc-950/60 border border-zinc-800 rounded-2xl">
+                    <span className="text-[10px] text-zinc-500 uppercase font-bold block">Places Restantes Disponibles</span>
+                    <span className="text-xl font-black text-amber-400 mt-1 block">
+                      {classes.reduce((acc, c) => acc + Math.max(0, (c.maxSpots || 30) - (c.subscribersCount || 0)), 0)} places
                     </span>
                   </div>
 
@@ -2959,13 +3068,6 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                     <span className="text-[10px] text-zinc-500 uppercase font-bold block">Total Collecté HelloAsso</span>
                     <span className="text-xl font-black text-orange-400 mt-1 block">
                       {classes.reduce((acc, c) => acc + (c.collectedAmount || 0), 0)} €
-                    </span>
-                  </div>
-
-                  <div className="p-3.5 bg-zinc-950/60 border border-zinc-800 rounded-2xl">
-                    <span className="text-[10px] text-zinc-500 uppercase font-bold block">Discipline Principale</span>
-                    <span className="text-sm font-black text-rose-300 mt-1.5 block truncate">
-                      Salsa Cubaine & Cardio Latino
                     </span>
                   </div>
                 </div>
@@ -3066,21 +3168,30 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                             {/* Visibility Badge */}
                             <button
                               onClick={() => handleToggleCampaignVisibility(camp.id)}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider transition-colors cursor-pointer ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm ${
                                 isPublic
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
-                                  : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 hover:scale-105'
+                                  : 'bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 hover:scale-105'
                               }`}
-                              title="Cliquer pour basculer Public / Privé"
+                              title="Cliquer pour basculer Public (inscriptions ouvertes) / Privé (inscriptions fermées)"
                             >
-                              <span className={`w-2 h-2 rounded-full ${isPublic ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
-                              <span>{camp.visibility || 'Public'}</span>
+                              {isPublic ? (
+                                <>
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span>Public (Ouvert)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Lock size={11} className="text-amber-400" />
+                                  <span>Privé (Fermé)</span>
+                                </>
+                              )}
                             </button>
 
                             {/* Days Remaining Pill */}
                             <span className="text-[11px] text-zinc-400 font-mono bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-800 flex items-center gap-1">
                               <Clock size={11} className="text-orange-400" />
-                              <span>{camp.daysRemaining !== undefined ? `${camp.daysRemaining} jours restants` : '318 jours restants'}</span>
+                              <span>{camp.daysRemaining !== undefined ? `${camp.daysRemaining}j` : '318j'}</span>
                             </span>
                           </div>
 
@@ -3107,22 +3218,41 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                             </p>
                           </div>
 
-                          {/* HelloAsso Numbers (Adhérents & Montant Collecté) */}
-                          <div className="grid grid-cols-2 gap-3 py-3 border-y border-zinc-800/80 bg-zinc-950/40 rounded-2xl px-3.5">
-                            <div>
-                              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Inscriptions</span>
-                              <span className="text-base font-black text-white mt-0.5 block">
-                                {camp.subscribersCount || 0} {isTrial ? 'inscrits' : 'adhérents'}
-                              </span>
-                            </div>
+                          {/* HelloAsso Numbers (Aforo, Inscrits & Places Restantes) */}
+                          {(() => {
+                            const maxSpots = camp.maxSpots || 30;
+                            const subscribers = camp.subscribersCount || 0;
+                            const spotsLeft = Math.max(0, maxSpots - subscribers);
+                            const isFull = spotsLeft <= 0;
 
-                            <div className="text-right">
-                              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Collecté</span>
-                              <span className="text-base font-black text-emerald-400 mt-0.5 block">
-                                {camp.collectedAmount || 0} €
-                              </span>
-                            </div>
-                          </div>
+                            return (
+                              <div className="space-y-2 py-3 border-y border-zinc-800/80 bg-zinc-950/40 rounded-2xl px-3.5">
+                                <div className="grid grid-cols-3 gap-2 text-center">
+                                  <div>
+                                    <span className="text-[9px] text-zinc-500 uppercase font-bold block">Aforo Max</span>
+                                    <span className="text-sm font-black text-white font-mono mt-0.5 block">{maxSpots} pl.</span>
+                                  </div>
+
+                                  <div>
+                                    <span className="text-[9px] text-zinc-500 uppercase font-bold block">Inscrits HelloAsso</span>
+                                    <span className="text-sm font-black text-emerald-400 font-mono mt-0.5 block">{subscribers} adh.</span>
+                                  </div>
+
+                                  <div>
+                                    <span className="text-[9px] text-zinc-500 uppercase font-bold block">Places Restantes</span>
+                                    <span className={`text-sm font-black font-mono mt-0.5 block ${isFull ? 'text-rose-500' : 'text-amber-400'}`}>
+                                      {isFull ? '0 (Complet)' : `${spotsLeft} dispo`}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-zinc-800/50">
+                                  <span className="text-zinc-500 font-semibold">Collecté HelloAsso :</span>
+                                  <span className="text-xs font-black text-emerald-400 font-mono">{camp.collectedAmount || 0} €</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* Price & Teacher details */}
                           <div className="flex items-center justify-between text-xs text-zinc-400">
@@ -3190,7 +3320,7 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
               {/* TABLE VIEW */}
               {campaignViewMode === 'table' && (
                 <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[700px]">
+                  <table className="w-full text-left text-xs min-w-[750px]">
                     <thead>
                       <tr className="border-b border-zinc-800 text-zinc-400 pb-3">
                         <th className="py-3">Campagne d'Inscription</th>
@@ -3198,7 +3328,9 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                         <th>Lieu</th>
                         <th>Discipline</th>
                         <th>Statut</th>
-                        <th>Adhérents</th>
+                        <th>Aforo (Max)</th>
+                        <th>Inscrits</th>
+                        <th>Places Restantes</th>
                         <th>Collecté</th>
                         <th>Tarif</th>
                         <th className="text-right">Actions</th>
@@ -3212,59 +3344,87 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                           if (selectedDisciplineFilter !== 'Tous' && c.category !== selectedDisciplineFilter) return false;
                           return true;
                         })
-                        .map((camp) => (
-                          <tr key={camp.id} className="hover:bg-zinc-800/30 transition-colors">
-                            <td className="py-3 font-semibold text-white">
-                              <div>{camp.name}</div>
-                              <span className="text-[10px] text-zinc-400 font-normal">{camp.schedule} • {camp.instructor}</span>
-                            </td>
-                            <td className="text-zinc-300 font-mono text-[11px]">{camp.season || 'Saison 2026 - 2027'}</td>
-                            <td className="text-zinc-300">{camp.location}</td>
-                            <td>
-                              <span className={`text-[9px] font-bold uppercase tracking-wider ${
-                                camp.category === 'Salsa Cubaine' ? 'text-orange-400' : 'text-emerald-400'
-                              }`}>
-                                {camp.category}
-                              </span>
-                            </td>
-                            <td>
-                              <button
-                                onClick={() => handleToggleCampaignVisibility(camp.id)}
-                                className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase cursor-pointer ${
-                                  camp.visibility !== 'Privé' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-400'
-                                }`}
-                              >
-                                {camp.visibility || 'Public'}
-                              </button>
-                            </td>
-                            <td className="font-bold text-white">{camp.subscribersCount || 0}</td>
-                            <td className="font-extrabold text-emerald-400">{camp.collectedAmount || 0} €</td>
-                            <td className="text-zinc-300 font-mono">{camp.annualPrice ? `${camp.annualPrice}€` : `${camp.priceMonthly}€/m`}</td>
-                            <td className="py-3 text-right space-x-2">
-                              <button
-                                onClick={() => handleOpenEditCampaign(camp)}
-                                className="p-1.5 text-zinc-300 hover:text-rose-400 rounded hover:bg-zinc-800 cursor-pointer"
-                                title="Modifier"
-                              >
-                                <Edit3 size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleDuplicateCampaign(camp)}
-                                className="p-1.5 text-zinc-300 hover:text-emerald-400 rounded hover:bg-zinc-800 cursor-pointer"
-                                title="Dupliquer pour saison suivante"
-                              >
-                                <Copy size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCampaign(camp.id, camp.name)}
-                                className="p-1.5 text-zinc-500 hover:text-rose-400 rounded hover:bg-zinc-800 cursor-pointer"
-                                title="Supprimer"
-                              >
-                                <Trash size={13} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                        .map((camp) => {
+                          const maxSpots = camp.maxSpots || 30;
+                          const subscribers = camp.subscribersCount || 0;
+                          const spotsLeft = Math.max(0, maxSpots - subscribers);
+                          const isFull = spotsLeft <= 0;
+
+                          return (
+                            <tr key={camp.id} className="hover:bg-zinc-800/30 transition-colors">
+                              <td className="py-3 font-semibold text-white">
+                                <div>{camp.name}</div>
+                                <span className="text-[10px] text-zinc-400 font-normal">{camp.schedule} • {camp.instructor}</span>
+                              </td>
+                              <td className="text-zinc-300 font-mono text-[11px]">{camp.season || 'Saison 2026 - 2027'}</td>
+                              <td className="text-zinc-300">{camp.location}</td>
+                              <td>
+                                <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                                  camp.category === 'Salsa Cubaine' ? 'text-orange-400' : 'text-emerald-400'
+                                }`}>
+                                  {camp.category}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  onClick={() => handleToggleCampaignVisibility(camp.id)}
+                                  className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer inline-flex items-center gap-1 transition-all ${
+                                    camp.visibility !== 'Privé' 
+                                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' 
+                                      : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700'
+                                  }`}
+                                  title="Cliquer pour basculer Public / Privé"
+                                >
+                                  {camp.visibility !== 'Privé' ? (
+                                    <>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                      <span>Public</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock size={9} className="text-amber-400" />
+                                      <span>Privé</span>
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+                              <td className="font-bold text-zinc-300 font-mono">{maxSpots} pl.</td>
+                              <td className="font-bold text-emerald-400 font-mono">{subscribers}</td>
+                              <td>
+                                <span className={`inline-block px-2 py-0.5 rounded font-mono font-bold text-[11px] ${
+                                  isFull ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/10 text-amber-300'
+                                }`}>
+                                  {isFull ? 'Complet' : `${spotsLeft} dispo`}
+                                </span>
+                              </td>
+                              <td className="font-extrabold text-emerald-400">{camp.collectedAmount || 0} €</td>
+                              <td className="text-zinc-300 font-mono">{camp.annualPrice ? `${camp.annualPrice}€` : `${camp.priceMonthly}€/m`}</td>
+                              <td className="py-3 text-right space-x-1.5">
+                                <button
+                                  onClick={() => handleOpenEditCampaign(camp)}
+                                  className="p-1.5 text-zinc-300 hover:text-rose-400 rounded hover:bg-zinc-800 cursor-pointer"
+                                  title="Modifier"
+                                >
+                                  <Edit3 size={13} />
+                                </button>
+                                <button
+                                  onClick={() => handleDuplicateCampaign(camp)}
+                                  className="p-1.5 text-zinc-300 hover:text-emerald-400 rounded hover:bg-zinc-800 cursor-pointer"
+                                  title="Dupliquer pour saison suivante"
+                                >
+                                  <Copy size={13} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCampaign(camp.id, camp.name)}
+                                  className="p-1.5 text-zinc-500 hover:text-rose-400 rounded hover:bg-zinc-800 cursor-pointer"
+                                  title="Supprimer"
+                                >
+                                  <Trash size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
@@ -4450,6 +4610,151 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                   </div>
                 </div>
 
+                {/* ========================================================= */}
+                {/* PDF UPLOADER & MANAGER FOR REGLEMENT / CONDITIONS         */}
+                {/* ========================================================= */}
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 border-2 border-rose-500/30 space-y-4 shadow-xl">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-800 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h5 className="text-sm font-bold text-white uppercase tracking-wider">
+                            Document PDF Officiel du Règlement Intérieur
+                          </h5>
+                          {(settingsForm.generalConditions?.pdfUrl) ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold flex items-center gap-1 border border-emerald-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              PDF Actif & En Ligne
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-bold">
+                              Aucun PDF chargé
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          Chargez le fichier PDF officiel qui sera téléchargeable directement par les élèves depuis la grille des tarifs et le modal des conditions.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick Action: Upload button */}
+                    <label className="px-4 py-2 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-2 transition-all shadow-md hover:scale-105 shrink-0">
+                      <Upload size={14} />
+                      <span>{settingsForm.generalConditions?.pdfUrl ? "Remplacer le fichier PDF" : "Charger un fichier PDF (.pdf)"}</span>
+                      <input
+                        id="admin-upload-conditions-pdf-input"
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleUploadConditionsPdf(file);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {settingsForm.generalConditions?.pdfUrl ? (
+                    /* Active PDF file display card */
+                    <div className="p-4 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex flex-col items-center justify-center shrink-0">
+                          <FileText size={20} />
+                          <span className="text-[9px] font-black tracking-widest mt-0.5">PDF</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-white truncate">
+                            {settingsForm.generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka.pdf"}
+                          </p>
+                          <div className="flex items-center gap-3 text-[11px] text-zinc-400 mt-0.5">
+                            {settingsForm.generalConditions.pdfFileSize && (
+                              <span>Taille : <strong className="text-zinc-300">{settingsForm.generalConditions.pdfFileSize}</strong></span>
+                            )}
+                            {settingsForm.generalConditions.pdfUploadDate && (
+                              <span>Mis en ligne le : <strong className="text-zinc-300">{settingsForm.generalConditions.pdfUploadDate}</strong></span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+                        <a
+                          id="admin-preview-pdf-btn"
+                          href={settingsForm.generalConditions.pdfUrl}
+                          download={settingsForm.generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka.pdf"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                        >
+                          <Download size={13} />
+                          <span>Tester / Télécharger</span>
+                        </a>
+
+                        <button
+                          id="admin-delete-pdf-btn"
+                          type="button"
+                          onClick={handleRemoveConditionsPdf}
+                          className="px-3.5 py-2 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                          <span>Supprimer</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Empty state explanation */
+                    <div className="p-4 rounded-xl bg-zinc-950/60 border border-dashed border-zinc-700 text-center space-y-2">
+                      <p className="text-xs text-zinc-400">
+                        📄 Aucun document PDF n'est actuellement rattaché. Vous pouvez soit <strong>sélectionner un fichier PDF depuis votre appareil</strong> via le bouton ci-dessus, soit coller une URL directe ci-dessous.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Manual URL / Google Drive link input option */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase flex items-center justify-between">
+                      <span>Lien Web ou Google Drive direct du document PDF (Optionnel) :</span>
+                      {settingsForm.generalConditions?.pdfUrl?.startsWith('data:') && (
+                        <span className="text-emerald-400 font-normal">Fichier PDF encodé et stocké localement</span>
+                      )}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="admin-conditions-pdf-url-input"
+                        type="text"
+                        value={settingsForm.generalConditions?.pdfUrl?.startsWith('data:') ? `[Fichier local chargé : ${settingsForm.generalConditions.pdfFileName || 'PDF'}]` : (settingsForm.generalConditions?.pdfUrl || '')}
+                        onChange={(e) => {
+                          if (!e.target.value.startsWith('[')) {
+                            handleUpdateConditionsPdfUrl(e.target.value);
+                          }
+                        }}
+                        placeholder="https://drive.google.com/file/d/... ou https://votresite.fr/reglement.pdf"
+                        className="w-full px-3.5 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white font-mono text-[11px] focus:outline-none focus:border-rose-500"
+                      />
+                      {settingsForm.generalConditions?.pdfUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateConditionsPdfUrl('')}
+                          className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-xl text-xs"
+                          title="Effacer le lien"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-zinc-500 block">
+                      💡 <em>Si vous collez un lien Google Drive, assurez-vous que les permissions du fichier sont réglées sur "Tous les utilisateurs disposant du lien".</em>
+                    </span>
+                  </div>
+                </div>
+
                 {/* Articles List */}
                 <div className="space-y-4">
                   {((settingsForm.generalConditions || DEFAULT_GENERAL_CONDITIONS).sections || []).map((section, idx) => (
@@ -4777,6 +5082,30 @@ export const BackOffice: React.FC<BackOfficeProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Live Spots Remaining Calculation Banner */}
+                {(() => {
+                  const maxS = campaignFormData.maxSpots || 30;
+                  const subs = campaignFormData.subscribersCount || 0;
+                  const rem = Math.max(0, maxS - subs);
+                  const isFull = rem <= 0;
+
+                  return (
+                    <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-amber-400" />
+                        <span className="text-xs text-zinc-300">
+                          Calcul en temps réel : <strong>{subs}</strong> inscrits sur <strong>{maxS}</strong> places d'aforo.
+                        </span>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-black ${
+                        isFull ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}>
+                        {isFull ? 'COMPLET (0 dispo)' : `${rem} PLACES RESTANTES`}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">

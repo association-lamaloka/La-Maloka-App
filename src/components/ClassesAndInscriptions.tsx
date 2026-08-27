@@ -5,7 +5,7 @@ import { DanceClass, Inscription, SiteSettings, DanceRoom, PricingPlan, GeneralC
 import { 
   Sparkles, Calendar, User, Phone, Mail, ChevronRight, Filter, AlertCircle, Trash2, 
   MapPin, CheckCircle, Clock, Building, Users, AlertTriangle, FileText, CreditCard, 
-  HelpCircle, Info, ExternalLink, ShieldCheck, Check, Search, DollarSign, Layers, Printer, X
+  HelpCircle, Info, ExternalLink, ShieldCheck, Check, Search, DollarSign, Layers, Printer, X, Download, Lock
 } from 'lucide-react';
 import { FloatingMonstera, FloatingHibiscus, HibiscusSVG } from './TropicalDecorations';
 import { syncToGoogleSheets } from '../services/googleSheetsSync';
@@ -47,7 +47,8 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
   const [conditionsSearch, setConditionsSearch] = useState<string>('');
 
   // Informative Mode Check (Engine ON/OFF)
-  const isRegistrationsOpen = siteSettings?.moduleToggles?.allowOnlineRegistrations === true;
+  // Registration logic
+  const globalRegistrationsEnabled = siteSettings?.moduleToggles?.allowOnlineRegistrations !== false;
 
   // Form State
   const [fullName, setFullName] = useState('');
@@ -71,15 +72,10 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
     if (defaultClassId && classes) {
       const found = classes.find((c) => c.id === defaultClassId);
       if (found) {
-        if (isRegistrationsOpen) {
-          setSelectedClass(found);
-          setIsRegistering(true);
-        } else {
-          setSelectedInfoClass(found);
-        }
+        setSelectedInfoClass(found);
       }
     }
-  }, [defaultClassId, classes, isRegistrationsOpen]);
+  }, [defaultClassId, classes]);
 
   const saveInscriptions = (newInscriptions: Inscription[]) => {
     setInscriptions(newInscriptions);
@@ -87,19 +83,15 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
   };
 
   const handleOpenRegister = (danceClass: DanceClass) => {
-    if (!isRegistrationsOpen) {
-      setSelectedInfoClass(danceClass);
-      return;
-    }
-    setSelectedClass(danceClass);
-    setStudentLevel(danceClass.level);
-    setIsRegistering(true);
+    const liveClass = (classes || []).find(c => c.id === danceClass.id) || danceClass;
+    setSelectedInfoClass(liveClass);
   };
 
   const handleRegisterFromTarif = (plan: PricingPlan) => {
     // Find corresponding class or create a matching dance class
     const matching: DanceClass = classes.find(c => c.id === plan.classId) ||
-      classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase() && c.location?.toLowerCase().includes(plan.location.toLowerCase().slice(0, 5))) || {
+      classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase() && (c.schedule?.toLowerCase().includes(plan.time.toLowerCase().slice(0, 3)) || c.location?.toLowerCase().includes(plan.location.toLowerCase().slice(0, 5)))) ||
+      classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase()) || {
         id: plan.id,
         name: `${plan.discipline} - ${plan.day} ${plan.time} (${plan.location})`,
         instructor: plan.instructor || 'Yasmilka Valdés & Équipe',
@@ -115,17 +107,12 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
         location: plan.location as any,
         roomName: plan.room,
         maxSpots: 30,
-        subscribersCount: 0
+        subscribersCount: 0,
+        visibility: 'Public',
+        active: true
       };
 
-    if (!isRegistrationsOpen) {
-      setSelectedInfoClass(matching);
-      return;
-    }
-
-    setSelectedClass(matching);
-    setStudentLevel(plan.level === 'Tous niveaux' ? 'Tous Niveaux' : plan.level);
-    setIsRegistering(true);
+    setSelectedInfoClass(matching);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -285,8 +272,8 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
           </div>
         </div>
 
-        {/* INFORMATIVE MODE BANNER (WHEN INSCRIPTIONS ARE DEACTIVATED FOR THE YEAR) */}
-        {!isRegistrationsOpen && (
+        {/* INFORMATIVE MODE BANNER (WHEN ALL INSCRIPTIONS ARE GLOBALLY DEACTIVATED) */}
+        {siteSettings?.moduleToggles?.allowOnlineRegistrations === false && (
           <div className="mb-8 p-5 sm:p-6 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-500/30 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left shadow-sm">
             <div className="flex items-start sm:items-center gap-3.5">
               <div className="p-3 bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-2xl shrink-0">
@@ -395,12 +382,16 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                       <th className="py-4 px-6">Commune & Salle</th>
                       <th className="py-4 px-6">Durée</th>
                       <th className="py-4 px-6 text-right">Tarif Annuel</th>
-                      <th className="py-4 px-6 text-center">{isRegistrationsOpen ? 'Inscription' : 'Détails & Horaires'}</th>
+                      <th className="py-4 px-6 text-center">Inscription / Détails</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
                     {pricingPlans.map((plan, index) => {
                       const isSalsa = plan.discipline.toLowerCase().includes('salsa');
+                      const matching = classes.find(c => c.id === plan.classId) ||
+                        classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase() && (c.schedule?.toLowerCase().includes(plan.time.toLowerCase().slice(0, 3)) || c.location?.toLowerCase().includes(plan.location.toLowerCase().slice(0, 5)))) ||
+                        classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase());
+                      const isPlanOpen = matching ? (matching.visibility !== 'Privé' && matching.active !== false) : true;
 
                       return (
                         <tr
@@ -476,20 +467,20 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                               id={`register-plan-btn-${plan.id}`}
                               onClick={() => handleRegisterFromTarif(plan)}
                               className={`px-4 py-2 font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer hover:scale-105 inline-flex items-center gap-1.5 ${
-                                isRegistrationsOpen
+                                isPlanOpen
                                   ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white'
-                                  : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-zinc-700 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-zinc-700'
+                                  : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
                               }`}
                             >
-                              {isRegistrationsOpen ? (
+                              {isPlanOpen ? (
                                 <>
                                   <span>S'inscrire</span>
                                   <ChevronRight size={14} />
                                 </>
                               ) : (
                                 <>
-                                  <Info size={13} />
-                                  <span>Détails & Horaires</span>
+                                  <Lock size={12} className="text-amber-500" />
+                                  <span>Fermé / Détails</span>
                                 </>
                               )}
                             </button>
@@ -505,6 +496,10 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
               <div className="block md:hidden divide-y divide-zinc-100 dark:divide-zinc-800 p-4 space-y-4">
                 {pricingPlans.map((plan, index) => {
                   const isSalsa = plan.discipline.toLowerCase().includes('salsa');
+                  const matching = classes.find(c => c.id === plan.classId) ||
+                    classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase() && (c.schedule?.toLowerCase().includes(plan.time.toLowerCase().slice(0, 3)) || c.location?.toLowerCase().includes(plan.location.toLowerCase().slice(0, 5)))) ||
+                    classes.find(c => c.category?.toLowerCase() === plan.discipline.toLowerCase());
+                  const isPlanOpen = matching ? (matching.visibility !== 'Privé' && matching.active !== false) : true;
 
                   return (
                     <div
@@ -554,20 +549,20 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                         id={`register-plan-mobile-btn-${plan.id}`}
                         onClick={() => handleRegisterFromTarif(plan)}
                         className={`w-full py-2.5 font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          isRegistrationsOpen
+                          isPlanOpen
                             ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white'
-                            : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-zinc-700 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-zinc-700'
+                            : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
                         }`}
                       >
-                        {isRegistrationsOpen ? (
+                        {isPlanOpen ? (
                           <>
                             <span>S'inscrire à ce créneau</span>
                             <ChevronRight size={14} />
                           </>
                         ) : (
                           <>
-                            <Info size={14} />
-                            <span>Consulter ce cours & Horaires</span>
+                            <Lock size={13} className="text-amber-500" />
+                            <span>Fermé • Consulter détails</span>
                           </>
                         )}
                       </button>
@@ -602,14 +597,41 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                   <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
                     <FileText size={16} />
                   </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-zinc-900 dark:text-white">Conditions Générales</h5>
-                    <button
-                      onClick={() => setShowConditionsModal(true)}
-                      className="text-[11px] text-rose-600 dark:text-rose-400 underline font-semibold hover:text-rose-700 cursor-pointer"
-                    >
-                      Consulter le règlement complet
-                    </button>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h5 className="text-xs font-bold text-zinc-900 dark:text-white">Conditions Générales</h5>
+                      {generalConditions?.pdfUrl && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase tracking-wider">
+                          PDF inclus
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      <button
+                        id="open-conditions-modal-btn"
+                        onClick={() => setShowConditionsModal(true)}
+                        className="text-[11px] text-rose-600 dark:text-rose-400 underline font-semibold hover:text-rose-700 cursor-pointer"
+                      >
+                        Consulter le règlement complet
+                      </button>
+                      {generalConditions?.pdfUrl && (
+                        <>
+                          <span className="text-zinc-300 dark:text-zinc-700 text-xs">•</span>
+                          <a
+                            id="download-reglement-pdf-direct-btn"
+                            href={generalConditions.pdfUrl}
+                            download={generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka_2026_2027.pdf"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            title="Télécharger le document PDF officiel"
+                          >
+                            <Download size={12} />
+                            <span>Télécharger PDF {generalConditions.pdfFileSize ? `(${generalConditions.pdfFileSize})` : ''}</span>
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -777,70 +799,87 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                             </span>
                           </div>
 
-                          {/* Jauge / Occupancy Bar */}
-                          <div className="space-y-1 pt-1">
-                            <div className="flex justify-between text-[11px] font-medium">
+                          {/* Jauge / Occupancy Bar & Real-time HelloAsso capacity */}
+                          <div className="space-y-1.5 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/80">
+                            <div className="flex justify-between items-center text-[11px] font-medium">
                               <span className="text-zinc-500 flex items-center gap-1">
-                                <Users size={12} />
-                                Places :
+                                <Users size={12} className="text-emerald-500 shrink-0" />
+                                <span>Places restantes :</span>
                               </span>
-                              <span className={`font-mono font-bold ${
-                                isFull ? 'text-rose-500' : isNearlyFull ? 'text-amber-500' : 'text-emerald-600'
+                              <span className={`font-mono font-bold px-2 py-0.5 rounded-md text-[11px] ${
+                                isFull 
+                                  ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
+                                  : isNearlyFull 
+                                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                               }`}>
-                                {isFull ? 'COMPLET (Liste d\'attente)' : `${spotsLeft} place(s) disponible(s)`}
+                                {isFull ? 'COMPLET (0 place)' : `${spotsLeft} disponible${spotsLeft > 1 ? 's' : ''} / ${maxSpots}`}
                               </span>
                             </div>
-                            <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5">
                               <div
                                 className={`h-full transition-all duration-500 rounded-full ${
-                                  isFull ? 'bg-rose-500' : isNearlyFull ? 'bg-amber-500' : 'bg-emerald-500'
+                                  isFull ? 'bg-rose-500' : isNearlyFull ? 'bg-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'
                                 }`}
                                 style={{ width: `${occupancyRate}%` }}
                               />
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-zinc-400">
+                              <span className="flex items-center gap-1 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-zinc-600 dark:text-zinc-300 font-semibold">{registeredCount} inscrit{registeredCount > 1 ? 's' : ''} HelloAsso</span>
+                              </span>
+                              <span className="font-mono">Aforo : {maxSpots} max</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Teacher & Register Button */}
-                        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black shadow-sm ${
-                              isSalsa ? 'bg-orange-500' : 'bg-emerald-600'
-                            }`}>
-                              {item.instructor ? item.instructor[0] : 'L'}
-                            </div>
-                            <div className="text-left">
-                              <p className="text-[9px] text-zinc-400 uppercase tracking-wider font-semibold">Professeur</p>
-                              <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{item.instructor}</p>
-                            </div>
-                          </div>
+                        {(() => {
+                          const isClassOpen = item.visibility !== 'Privé' && item.active !== false;
 
-                          <button
-                            id={`class-register-btn-${item.id}`}
-                            onClick={() => handleOpenRegister(item)}
-                            className={`inline-flex items-center gap-1.5 px-4 py-2.5 font-bold rounded-xl text-xs tracking-wider uppercase transition-all shadow-md cursor-pointer hover:scale-105 ${
-                              isRegistrationsOpen
-                                ? isFull
-                                  ? 'bg-zinc-700 hover:bg-zinc-800 text-zinc-200'
-                                  : isSalsa
-                                  ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white'
-                                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white'
-                                : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-zinc-700 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-zinc-700'
-                            }`}
-                          >
-                            {isRegistrationsOpen ? (
-                              <>
-                                <span>{isFull ? "Liste d'attente" : "S'inscrire"}</span>
-                                <ChevronRight size={14} />
-                              </>
-                            ) : (
-                              <>
-                                <Info size={13} />
-                                <span>Détails & Horaires</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
+                          return (
+                            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                              <div className="flex items-center gap-2.5">
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black shadow-sm ${
+                                  isSalsa ? 'bg-orange-500' : 'bg-emerald-600'
+                                }`}>
+                                  {item.instructor ? item.instructor[0] : 'L'}
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-[9px] text-zinc-400 uppercase tracking-wider font-semibold">Professeur</p>
+                                  <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{item.instructor}</p>
+                                </div>
+                              </div>
+
+                              <button
+                                id={`class-register-btn-${item.id}`}
+                                onClick={() => handleOpenRegister(item)}
+                                className={`inline-flex items-center gap-1.5 px-4 py-2.5 font-bold rounded-xl text-xs tracking-wider uppercase transition-all shadow-md cursor-pointer hover:scale-105 ${
+                                  isClassOpen
+                                    ? isFull
+                                      ? 'bg-zinc-700 hover:bg-zinc-800 text-zinc-200'
+                                      : isSalsa
+                                      ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white'
+                                      : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white'
+                                    : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
+                                }`}
+                              >
+                                {isClassOpen ? (
+                                  <>
+                                    <span>{isFull ? "Liste d'attente" : "S'inscrire"}</span>
+                                    <ChevronRight size={14} />
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock size={12} className="text-amber-500" />
+                                    <span>Fermé / Détails</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   );
@@ -956,8 +995,44 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                   </button>
                 </div>
 
+                {/* Official PDF Download Banner if uploaded */}
+                {generalConditions?.pdfUrl && (
+                  <div className="p-4 my-3 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-rose-500/10 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0 shadow-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <FileText size={20} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                            Document PDF Officiel du Règlement
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[9px] font-extrabold uppercase">
+                            Certifié
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          {generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka.pdf"} {generalConditions.pdfFileSize ? `• ${generalConditions.pdfFileSize}` : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      id="modal-download-official-pdf-btn"
+                      href={generalConditions.pdfUrl}
+                      download={generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka_2026_2027.pdf"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer hover:scale-105 shrink-0 w-full sm:w-auto"
+                    >
+                      <Download size={14} />
+                      <span>Télécharger le PDF</span>
+                    </a>
+                  </div>
+                )}
+
                 {/* Search Bar inside General Conditions */}
-                <div className="py-4 shrink-0">
+                <div className="pb-3 shrink-0">
                   <div className="relative">
                     <Search size={16} className="absolute left-3 top-3 text-zinc-400" />
                     <input
@@ -1002,7 +1077,21 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                     Pour toute question : <a href="mailto:association.lamaloka@gmail.com" className="text-rose-500 font-bold underline">association.lamaloka@gmail.com</a>
                   </div>
 
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+                    {generalConditions?.pdfUrl && (
+                      <a
+                        id="footer-download-pdf-btn"
+                        href={generalConditions.pdfUrl}
+                        download={generalConditions.pdfFileName || "Reglement_Interieur_La_Maloka_2026_2027.pdf"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-emerald-500/20"
+                      >
+                        <Download size={13} />
+                        <span>Télécharger PDF</span>
+                      </a>
+                    )}
+
                     <button
                       onClick={() => window.print()}
                       className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -1029,23 +1118,30 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
         {/* ======================================================= */}
         <AnimatePresence>
           {selectedInfoClass && (() => {
-            const helloAssoLink = selectedInfoClass.helloAssoUrl && selectedInfoClass.helloAssoUrl !== 'https://www.helloasso.com/associations/la-maloka'
-              ? selectedInfoClass.helloAssoUrl
-              : selectedInfoClass.id === 'c-essai-salsa-2026' || selectedInfoClass.name.toLowerCase().includes('essai')
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cours-d-essai-salsa-cubaine-vendredi-11-septembre-2026-20-heures'
-              : selectedInfoClass.id === 'c-salsa-flf-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('salsa') && selectedInfoClass.name.toLowerCase().includes('débutant'))
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
-              : selectedInfoClass.id === 'c-salsa-flf-21h-2026' || (selectedInfoClass.name.toLowerCase().includes('salsa') && (selectedInfoClass.name.toLowerCase().includes('inter') || selectedInfoClass.name.toLowerCase().includes('21h')))
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
-              : selectedInfoClass.id === 'c-cardio-lqy-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && (selectedInfoClass.name.toLowerCase().includes('queue') || selectedInfoClass.name.toLowerCase().includes('mardi')))
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
-              : selectedInfoClass.id === 'c-cardio-flf-20h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && selectedInfoClass.name.toLowerCase().includes('20h'))
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
-              : selectedInfoClass.id === 'c-cardio-flf-21h-2026' || (selectedInfoClass.name.toLowerCase().includes('cardio') && selectedInfoClass.name.toLowerCase().includes('21h'))
-              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
-              : selectedInfoClass.helloAssoUrl || 'https://www.helloasso.com/associations/la-maloka';
+            const liveClass = (classes || []).find(c => c.id === selectedInfoClass.id) || selectedInfoClass;
+            const isClassRegistrationOpen = liveClass.visibility !== 'Privé' && liveClass.active !== false;
 
-            const isTrial = selectedInfoClass.isTrialClass || selectedInfoClass.id === 'c-essai-salsa-2026' || selectedInfoClass.name.toLowerCase().includes('essai');
+            const helloAssoLink = liveClass.helloAssoUrl && liveClass.helloAssoUrl !== 'https://www.helloasso.com/associations/la-maloka'
+              ? liveClass.helloAssoUrl
+              : liveClass.id === 'c-essai-salsa-2026' || liveClass.name.toLowerCase().includes('essai')
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cours-d-essai-salsa-cubaine-vendredi-11-septembre-2026-20-heures'
+              : liveClass.id === 'c-salsa-flf-20h-2026' || (liveClass.name.toLowerCase().includes('salsa') && liveClass.name.toLowerCase().includes('débutant'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury'
+              : liveClass.id === 'c-salsa-flf-21h-2026' || (liveClass.name.toLowerCase().includes('salsa') && (liveClass.name.toLowerCase().includes('inter') || liveClass.name.toLowerCase().includes('21h')))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2'
+              : liveClass.id === 'c-cardio-lqy-20h-2026' || (liveClass.name.toLowerCase().includes('cardio') && (liveClass.name.toLowerCase().includes('queue') || liveClass.name.toLowerCase().includes('mardi')))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines'
+              : liveClass.id === 'c-cardio-flf-20h-2026' || (liveClass.name.toLowerCase().includes('cardio') && liveClass.name.toLowerCase().includes('20h'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
+              : liveClass.id === 'c-cardio-flf-21h-2026' || (liveClass.name.toLowerCase().includes('cardio') && liveClass.name.toLowerCase().includes('21h'))
+              ? 'https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury'
+              : liveClass.helloAssoUrl || 'https://www.helloasso.com/associations/la-maloka';
+
+            const isTrial = liveClass.isTrialClass || liveClass.id === 'c-essai-salsa-2026' || liveClass.name.toLowerCase().includes('essai');
+            const liveMaxSpots = liveClass.maxSpots || 30;
+            const liveRegistered = liveClass.subscribersCount || 0;
+            const liveSpotsLeft = liveClass.spotsRemaining !== undefined ? liveClass.spotsRemaining : Math.max(0, liveMaxSpots - liveRegistered);
+            const liveIsFull = liveSpotsLeft <= 0;
 
             return (
               <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1058,11 +1154,19 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                 >
                   <div className="flex justify-between items-start pb-4 border-b border-zinc-100 dark:border-zinc-800">
                     <div className="space-y-1">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300">
-                        Fiche Information Cours • Saison 2026 - 2027
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                          Fiche Information Cours • {liveClass.season || 'Saison 2026 - 2027'}
+                        </span>
+                        {!isClassRegistrationOpen && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 flex items-center gap-1">
+                            <Lock size={10} className="text-amber-500" />
+                            Privé / Fermé
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                        {selectedInfoClass.name}
+                        {liveClass.name}
                       </h3>
                     </div>
                     <button
@@ -1079,14 +1183,14 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
                         <p className="text-[10px] text-zinc-500 uppercase font-bold">Discipline & Niveau</p>
-                        <p className="text-xs font-black text-zinc-900 dark:text-white mt-0.5">{selectedInfoClass.category || 'Danse'}</p>
-                        <p className="text-[11px] text-rose-500 font-semibold">{selectedInfoClass.level}</p>
+                        <p className="text-xs font-black text-zinc-900 dark:text-white mt-0.5">{liveClass.category || 'Danse'}</p>
+                        <p className="text-[11px] text-rose-500 font-semibold">{liveClass.level}</p>
                       </div>
 
                       <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60">
                         <p className="text-[10px] text-zinc-500 uppercase font-bold">Tarif Officiel</p>
                         <p className="text-sm font-black text-rose-600 dark:text-rose-400 mt-0.5">
-                          {isTrial ? 'Gratuit (Séance d\'essai)' : selectedInfoClass.annualPrice ? `${selectedInfoClass.annualPrice} € / an` : `${selectedInfoClass.priceMonthly} € / m`}
+                          {isTrial ? 'Gratuit (Séance d\'essai)' : liveClass.annualPrice ? `${liveClass.annualPrice} € / an` : `${liveClass.priceMonthly} € / m`}
                         </p>
                         <p className="text-[10px] text-zinc-500">{isTrial ? 'Sans engagement' : 'Paiement 3x possible'}</p>
                       </div>
@@ -1095,42 +1199,60 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                     <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 space-y-2">
                       <div className="flex items-center gap-2 text-xs">
                         <Clock size={15} className="text-orange-500 shrink-0" />
-                        <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.schedule}</span>
+                        <span className="font-bold text-zinc-900 dark:text-white">{liveClass.schedule}</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-xs">
                         <MapPin size={15} className="text-rose-500 shrink-0" />
                         <div>
-                          <span className="font-bold text-zinc-900 dark:text-white">{selectedInfoClass.location}</span>
-                          <span className="text-zinc-500 block text-[11px]">{selectedInfoClass.roomName || 'Salle dédiée'}</span>
+                          <span className="font-bold text-zinc-900 dark:text-white">{liveClass.location}</span>
+                          <span className="text-zinc-500 block text-[11px]">{liveClass.roomName || 'Salle dédiée'}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-xs">
                         <Users size={15} className="text-emerald-500 shrink-0" />
-                        <span className="text-zinc-700 dark:text-zinc-300">Professeur : <strong>{selectedInfoClass.instructor || 'Yasmilka Valdés & Équipe'}</strong></span>
+                        <span className="text-zinc-700 dark:text-zinc-300">Professeur : <strong>{liveClass.instructor || 'Yasmilka Valdés & Équipe'}</strong></span>
                       </div>
                     </div>
 
-                    {selectedInfoClass.description && (
+                    {liveClass.description && (
                       <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                        {selectedInfoClass.description}
+                        {liveClass.description}
                       </p>
                     )}
 
-                    {/* DEDICATED HELLOASSO ADHESION CARD */}
-                    {helloAssoLink && (
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/30 space-y-3 shadow-sm">
+                    {/* DEDICATED HELLOASSO ADHESION CARD (WHEN PUBLIC & ACTIVE) */}
+                    {isClassRegistrationOpen && helloAssoLink ? (
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/30 space-y-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                             <h4 className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                              Adhésion & Inscription en Ligne Ouverte
+                              ADHÉSION & INSCRIPTION EN DIRECT HELLOASSO
                             </h4>
                           </div>
                           <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 font-bold border border-emerald-500/30">
-                            HelloAsso
+                            HelloAsso Live
                           </span>
+                        </div>
+
+                        {/* Capacity / Aforo live status grid */}
+                        <div className="grid grid-cols-3 gap-2 bg-emerald-950/20 dark:bg-zinc-950/40 p-2.5 rounded-xl border border-emerald-500/20 text-center">
+                          <div>
+                            <span className="text-[9px] uppercase font-bold text-zinc-500 dark:text-zinc-400 block">Capacité / Aforo</span>
+                            <span className="text-sm font-extrabold text-zinc-900 dark:text-white font-mono">{liveMaxSpots} places</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] uppercase font-bold text-zinc-500 dark:text-zinc-400 block">Inscrits HelloAsso</span>
+                            <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{liveRegistered} adhérent{liveRegistered > 1 ? 's' : ''}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] uppercase font-bold text-zinc-500 dark:text-zinc-400 block">Places Restantes</span>
+                            <span className={`text-sm font-extrabold font-mono ${liveIsFull ? 'text-rose-500' : 'text-emerald-500'}`}>
+                              {liveIsFull ? '0 (Complet)' : `${liveSpotsLeft} place${liveSpotsLeft > 1 ? 's' : ''}`}
+                            </span>
+                          </div>
                         </div>
 
                         <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed">
@@ -1140,13 +1262,13 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                         </p>
 
                         <a
-                          id={`helloasso-direct-btn-${selectedInfoClass.id}`}
+                          id={`helloasso-direct-btn-${liveClass.id}`}
                           href={helloAssoLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer hover:shadow-lg hover:shadow-emerald-500/25"
                         >
-                          <span>👉 S'inscrire / Adhérer sur HelloAsso</span>
+                          <span>👉 S'INSCRIRE / ADHÉRER SUR HELLOASSO</span>
                           <ExternalLink size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </a>
 
@@ -1157,13 +1279,49 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                           </a>
                         </div>
                       </div>
+                    ) : (
+                      /* DEDICATED CLOSED / PRIVATE INSCRIPTION CARD (SAME SIZE & SHAPE) */
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-zinc-100 via-amber-50/30 to-zinc-100 dark:from-zinc-800/90 dark:via-zinc-850 dark:to-zinc-800/90 border-2 border-zinc-300/80 dark:border-zinc-700 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                            <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                              Les inscriptions sont actuellement fermées
+                            </h4>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold border border-zinc-300 dark:border-zinc-700">
+                            Fermé / Privé
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed">
+                          Les inscriptions en ligne pour ce créneau sont temporairement suspendues ou complètes. Pour toute question, demande d'inscription ou pour rejoindre la liste d'attente, contactez directement l'association par email.
+                        </p>
+
+                        <div className="w-full py-3.5 px-4 bg-zinc-200/90 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 select-none border border-zinc-300/60 dark:border-zinc-700/60">
+                          <Lock size={15} className="text-zinc-400" />
+                          <span>Inscriptions en ligne fermées</span>
+                        </div>
+
+                        <div className="pt-1 text-[11px] text-zinc-600 dark:text-zinc-400 bg-white/70 dark:bg-black/40 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-between gap-2">
+                          <span className="truncate">Pour être averti d'une place :</span>
+                          <a
+                            id={`modal-contact-waitlist-btn-${liveClass.id}`}
+                            href={`mailto:association.lamaloka@gmail.com?subject=Demande d'inscription / Liste d'attente - ${encodeURIComponent(liveClass.name)}`}
+                            className="text-rose-600 dark:text-rose-400 font-bold hover:underline inline-flex items-center gap-1 shrink-0"
+                          >
+                            <Mail size={12} />
+                            <span>Liste d'attente</span>
+                          </a>
+                        </div>
+                      </div>
                     )}
                   </div>
 
                   <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row gap-2.5">
-                    {helloAssoLink && (
+                    {isClassRegistrationOpen && helloAssoLink ? (
                       <a
-                        id={`modal-footer-helloasso-btn-${selectedInfoClass.id}`}
+                        id={`modal-footer-helloasso-btn-${liveClass.id}`}
                         href={helloAssoLink}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1171,6 +1329,15 @@ export const ClassesAndInscriptions: React.FC<ClassesAndInscriptionsProps> = ({
                       >
                         <ExternalLink size={14} />
                         <span>Ouvrir HelloAsso</span>
+                      </a>
+                    ) : (
+                      <a
+                        id={`modal-footer-contact-waitlist-btn-${liveClass.id}`}
+                        href={`mailto:association.lamaloka@gmail.com?subject=Demande d'inscription - ${encodeURIComponent(liveClass.name)}`}
+                        className="flex-1 py-3 text-center bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md inline-flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Mail size={14} />
+                        <span>Contacter l'Association</span>
                       </a>
                     )}
                     <a
