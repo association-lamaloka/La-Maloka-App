@@ -32,6 +32,8 @@ export default function App() {
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [contentLoading, setContentLoading] = useState(true);
+  const [contentError, setContentError] = useState('');
 
   useEffect(() => {
     let unsubscribe = () => {};
@@ -77,7 +79,7 @@ export default function App() {
       'maloka_site_settings',
     ].forEach((key) => localStorage.removeItem(key));
 
-    const unsubscribeSettings = subscribeSiteSettings(setSettings);
+    const unsubscribeSettings = subscribeSiteSettings((value) => { setSettings(value); setContentLoading(false); }, () => { setContentError('Le contenu distant est indisponible. Les valeurs initiales sûres sont affichées.'); setContentLoading(false); });
     const unsubscribeGallery = subscribeGallery(setPhotos);
     const unsubscribeCourses = subscribeCourses(setCourses);
     const unsubscribeVideos = subscribeVideos(setVideos);
@@ -123,6 +125,8 @@ export default function App() {
       />
 
       <main>
+        {contentLoading && <p role="status" className="bg-amber-50 p-3 text-center text-sm dark:bg-amber-950/30">Chargement du contenu…</p>}
+        {contentError && <p role="status" className="bg-amber-50 p-3 text-center text-sm dark:bg-amber-950/30">{contentError}</p>}
         {view === 'accueil' && homePage.published && (
           <Hero
             siteSettings={settings}

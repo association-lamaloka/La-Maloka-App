@@ -3,33 +3,34 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { DanceClass, DanceEvent, FooterContent, HomePageContent, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
 import { DEFAULT_FOOTER, DEFAULT_HOME_PAGE, DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from '../data';
+import { normalizeCourses, normalizeEvents, normalizeFooter, normalizeHome, normalizeNavigation, normalizePhotos, normalizeRegistration, normalizeSiteSettings, normalizeTerms, normalizeVideos } from './contentNormalization';
 
 const sortByOrder = <T extends { order?: number }>(items: T[]) => [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 const withoutUndefined = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
-const subscribePublishedCollection = <T extends { order?: number }>(name: string, callback: (items: T[]) => void) => {
+const subscribePublishedCollection = <T extends { order?: number }>(name: string, callback: (items: T[]) => void, normalize: (value: unknown) => T[], onError?: (error: Error) => void) => {
   let unsubscribeSnapshot = () => {};
   const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
     unsubscribeSnapshot();
     const isAdmin = user?.email === 'association.lamaloka@gmail.com' && user.emailVerified;
     const source = isAdmin ? collection(db, name) : query(collection(db, name), where('active', '==', true));
-    unsubscribeSnapshot = onSnapshot(source, (snapshot) => callback(sortByOrder(snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as unknown as T)))), () => callback([]));
+    unsubscribeSnapshot = onSnapshot(source, (snapshot) => callback(normalize(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })))), (error) => { callback(normalize([])); onError?.(error); });
   });
   return () => { unsubscribeSnapshot(); unsubscribeAuth(); };
 };
 
-export const subscribeSiteSettings = (callback: (settings: SiteSettings) => void) =>
-  onSnapshot(doc(db, 'site_settings', 'global'), (snapshot) => callback(snapshot.exists() ? { ...DEFAULT_SITE_SETTINGS, ...snapshot.data() } as SiteSettings : DEFAULT_SITE_SETTINGS), () => callback(DEFAULT_SITE_SETTINGS));
-export const subscribeCourses = (callback: (items: DanceClass[]) => void) => subscribePublishedCollection<DanceClass>('courses', callback);
-export const subscribeEvents = (callback: (items: DanceEvent[]) => void) => subscribePublishedCollection<DanceEvent>('events', callback);
-export const subscribeGallery = (callback: (items: PhotoItem[]) => void) => subscribePublishedCollection<PhotoItem>('gallery', callback);
-export const subscribeVideos = (callback: (items: VideoItem[]) => void) => subscribePublishedCollection<VideoItem>('videos', callback);
+export const subscribeSiteSettings = (callback: (settings: SiteSettings) => void, onError?: (error: Error) => void) =>
+  onSnapshot(doc(db, 'site_settings', 'global'), (snapshot) => callback(normalizeSiteSettings(snapshot.exists() ? snapshot.data() : undefined)), (error) => { callback(normalizeSiteSettings(undefined)); onError?.(error); });
+export const subscribeCourses = (callback: (items: DanceClass[]) => void) => subscribePublishedCollection<DanceClass>('courses', callback, normalizeCourses);
+export const subscribeEvents = (callback: (items: DanceEvent[]) => void) => subscribePublishedCollection<DanceEvent>('events', callback, normalizeEvents);
+export const subscribeGallery = (callback: (items: PhotoItem[]) => void) => subscribePublishedCollection<PhotoItem>('gallery', callback, normalizePhotos);
+export const subscribeVideos = (callback: (items: VideoItem[]) => void) => subscribePublishedCollection<VideoItem>('videos', callback, normalizeVideos);
 export const subscribeRegistrationProcess = (callback: (item: RegistrationProcess) => void) =>
-  onSnapshot(doc(db, 'registration_process', 'global'), (snapshot) => callback(snapshot.exists() ? snapshot.data() as RegistrationProcess : DEFAULT_REGISTRATION_PROCESS), () => callback(DEFAULT_REGISTRATION_PROCESS));
+  onSnapshot(doc(db, 'registration_process', 'global'), (snapshot) => callback(normalizeRegistration(snapshot.exists() ? snapshot.data() : undefined)), () => callback(normalizeRegistration(undefined)));
 export const subscribeMembershipTerms = (callback: (item: MembershipTerms) => void) =>
-  onSnapshot(doc(db, 'membership_terms', 'global'), (snapshot) => callback(snapshot.exists() ? snapshot.data() as MembershipTerms : DEFAULT_MEMBERSHIP_TERMS), () => callback(DEFAULT_MEMBERSHIP_TERMS));
-export const subscribeNavigation = (callback: (items: NavigationItem[]) => void) => onSnapshot(doc(db, 'navigation', 'main'), (snapshot) => callback(snapshot.exists() ? sortByOrder(snapshot.data().items as NavigationItem[]) : DEFAULT_NAVIGATION), () => callback(DEFAULT_NAVIGATION));
-export const subscribeHomePage = (callback: (value: HomePageContent) => void) => onSnapshot(doc(db, 'pages', 'home'), (snapshot) => callback(snapshot.exists() ? { ...DEFAULT_HOME_PAGE, ...snapshot.data() } as HomePageContent : DEFAULT_HOME_PAGE), () => callback({ ...DEFAULT_HOME_PAGE, published: false }));
-export const subscribeFooter = (callback: (value: FooterContent) => void) => onSnapshot(doc(db, 'pages', 'footer'), (snapshot) => callback(snapshot.exists() ? { ...DEFAULT_FOOTER, ...snapshot.data() } as FooterContent : DEFAULT_FOOTER), () => callback({ ...DEFAULT_FOOTER, published: false }));
+  onSnapshot(doc(db, 'membership_terms', 'global'), (snapshot) => callback(normalizeTerms(snapshot.exists() ? snapshot.data() : undefined)), () => callback(normalizeTerms(undefined)));
+export const subscribeNavigation = (callback: (items: NavigationItem[]) => void) => onSnapshot(doc(db, 'navigation', 'main'), (snapshot) => callback(normalizeNavigation(snapshot.exists() ? snapshot.data() : undefined)), () => callback(normalizeNavigation(undefined)));
+export const subscribeHomePage = (callback: (value: HomePageContent) => void) => onSnapshot(doc(db, 'pages', 'home'), (snapshot) => callback(normalizeHome(snapshot.exists() ? snapshot.data() : undefined)), () => callback(normalizeHome(undefined)));
+export const subscribeFooter = (callback: (value: FooterContent) => void) => onSnapshot(doc(db, 'pages', 'footer'), (snapshot) => callback(normalizeFooter(snapshot.exists() ? snapshot.data() : undefined)), () => callback(normalizeFooter(undefined)));
 
 export const saveSiteSettingsToCloud = (item: SiteSettings) => setDoc(doc(db, 'site_settings', 'global'), withoutUndefined({ associationName: item.associationName, tagline: item.tagline, logoUrl: item.logoUrl ?? '', heroHeadline: item.heroHeadline, heroSubheadline: item.heroSubheadline, heroImage: item.heroImage ?? '', contactEmail: item.contactEmail, contactPhone: item.contactPhone, facebookUrl: item.facebookUrl ?? '', instagramUrl: item.instagramUrl ?? '', youtubeUrl: item.youtubeUrl ?? '', locationFontenay: item.locationFontenay, locationLaQueue: item.locationLaQueue, season: item.season ?? '', footerLegalText: item.footerLegalText ?? '', copyrightText: item.copyrightText ?? '', coursesPageTitle: item.coursesPageTitle ?? 'Nos cours', coursesPageSubtitle: item.coursesPageSubtitle ?? '', agendaPageTitle: item.agendaPageTitle ?? 'Agenda', agendaPageSubtitle: item.agendaPageSubtitle ?? '', galleryPageTitle: item.galleryPageTitle ?? 'Photos & Vidéos', galleryPageSubtitle: item.galleryPageSubtitle ?? '', bannerText: item.bannerText ?? item.registrationInfo.bannerText, bannerVisible: item.bannerVisible ?? item.moduleToggles.showRegistrationBanner, heroPrimaryButtonText: item.heroPrimaryButtonText ?? 'Planning, tarifs & cours 2026-2027', heroSecondaryButtonText: item.heroSecondaryButtonText ?? 'Dates & Agenda', updatedAt: serverTimestamp() }));
 export const saveNavigation = (items: NavigationItem[]) => setDoc(doc(db, 'navigation', 'main'), { items: sortByOrder(items) });
