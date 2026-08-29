@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, getRedirectResult, onAuthStateChanged, signInWithRedirect, signOut, User } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { LogIn, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { auth, authPersistenceReady } from '../firebase';
 import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
@@ -14,35 +15,61 @@ const extractYouTubeId = (value: string) => {
   return match?.[1] ?? null;
 };
 
+const authErrorMessage = (caught: unknown) => {
+  const code = caught instanceof FirebaseError ? caught.code : 'auth/unknown-error';
+  return `La connexion sécurisée avec Google a échoué. Veuillez réessayer ou contacter la personne responsable du site. Code Firebase : ${code}.`;
+};
+
 export function SimpleAdmin({ settings, courses, photos, videos, registration, terms }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('general');
   const [message, setMessage] = useState('');
   const [initializing, setInitializing] = useState(false);
 
-  useEffect(() => onAuthStateChanged(auth, async (current) => {
-    if (current && (current.email !== ADMIN_EMAIL || !current.emailVerified)) {
-      await signOut(auth);
-      setError(`Le compte ${current.email ?? 'sélectionné'} n’est pas autorisé. Connectez-vous avec ${ADMIN_EMAIL}.`);
-      setUser(null);
-    } else setUser(current);
-    setAuthLoading(false);
-  }), []);
+  useEffect(() => {
+    let unsubscribe = () => {};
+    const authorize = async (current: User | null) => {
+      if (current && (current.email !== ADMIN_EMAIL || !current.emailVerified)) {
+        await signOut(auth);
+        setError('Ce compte Google n’est pas autorisé à administrer La Maloka.');
+        setUser(null);
+        return;
+      }
+      setUser(current);
+    };
+    const processRedirect = async () => {
+      try {
+        await authPersistenceReady;
+        const result = await getRedirectResult(auth);
+        if (result) await authorize(result.user);
+        unsubscribe = onAuthStateChanged(auth, authorize);
+      } catch (caught) {
+        setError(authErrorMessage(caught));
+      } finally {
+        setAuthLoading(false);
+        setRedirecting(false);
+      }
+    };
+    void processRedirect();
+    return () => unsubscribe();
+  }, []);
 
   const login = async () => {
     setError('');
+    setRedirecting(true);
     try {
       await authPersistenceReady;
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ login_hint: ADMIN_EMAIL });
-      const result = await signInWithPopup(auth, provider);
-      if (result.user.email !== ADMIN_EMAIL || !result.user.emailVerified) {
-        await signOut(auth);
-        setError(`Ce compte n’est pas autorisé. Utilisez le compte Google vérifié ${ADMIN_EMAIL}.`);
-      }
-    } catch { setError(`La connexion avec Google a échoué. Réessayez avec ${ADMIN_EMAIL}.`); }
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await signInWithRedirect(auth, provider);
+    } catch (caught) {
+      setRedirecting(false);
+      setError(authErrorMessage(caught));
+    }
   };
 
   const initialize = async () => {
@@ -53,8 +80,9 @@ export function SimpleAdmin({ settings, courses, photos, videos, registration, t
     finally { setInitializing(false); }
   };
 
+  if (redirecting) return <Status text="Redirection sécurisée vers Google…" />;
   if (authLoading) return <Status text="Vérification de l’accès…" />;
-  if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Réservé au compte Google vérifié de l’association.</p>{error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
+  if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Connexion sécurisée avec Google. Sélectionnez le compte officiel de l’association.</p>{error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
 
   const tabs: Array<[Tab, string]> = [['general', 'Informations générales'], ['courses', 'Cours, tarifs et inscriptions'], ['registration', 'Procédure d’inscription'], ['terms', 'Conditions générales d’adhésion'], ['photos', 'Photos'], ['videos', 'Vidéos YouTube']];
   return <section className="mx-auto max-w-7xl space-y-6 px-4 py-10">
