@@ -5,14 +5,18 @@ const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
 const admin = readFileSync(new URL('../src/components/SimpleAdmin.tsx', import.meta.url), 'utf8');
 const firebase = readFileSync(new URL('../src/firebase.ts', import.meta.url), 'utf8');
 
-assert.match(firebase, /setPersistence\(auth, browserLocalPersistence\)/, 'La session Firebase doit persister après le retour Google et une actualisation.');
-assert.match(app, /getRedirectResult\(auth\)/, 'Le retour Google doit être traité globalement dans App.');
-assert.match(app, /onAuthStateChanged\(auth/, 'App doit attendre la résolution de la session Firebase.');
-assert.match(app, /current\.email !== ADMIN_EMAIL \|\| !current\.emailVerified/, 'Une autre compte ou une adresse non vérifiée doit être rejetée.');
-assert.match(app, /setView\('administration'\)/, 'Un retour autorisé doit ouvrir automatiquement ÉQUIPE.');
-assert.match(admin, /window\.location\.hash = 'administration'/, 'La route ÉQUIPE doit être conservée avant la redirection.');
-assert.match(admin, /signInWithRedirect\(auth, provider\)/, 'La redirection ne doit démarrer qu’après le clic de connexion.');
-assert.doesNotMatch(admin, /getRedirectResult/, 'Le résultat de redirection ne doit pas dépendre du montage de SimpleAdmin.');
-assert.match(admin, /signOut\(auth\)/, 'La fermeture de session doit rester disponible.');
+assert.match(firebase, /setPersistence\(auth, browserLocalPersistence\)/, 'La session Firebase doit persister après une actualisation.');
+assert.match(app, /onAuthStateChanged\(auth/, 'App doit restaurer globalement la session Firebase au chargement.');
+assert.doesNotMatch(app, /getRedirectResult|signInWithRedirect/, 'App ne doit plus traiter de retour par redirection.');
+assert.match(app, /current\.email !== ADMIN_EMAIL \|\| !current\.emailVerified/, 'Une autre compte ou une adresse non vérifiée doit être rejetée globalement.');
+assert.match(admin, /setCustomParameters\(\{ prompt: 'select_account' \}\)/, 'Google doit afficher son sélecteur officiel de compte.');
+assert.match(admin, /signInWithPopup\(auth, provider\)/, 'La fenêtre Google doit être ouverte directement par le clic.');
+assert.match(admin, /result\.user\.email !== 'association\.lamaloka@gmail\.com' \|\| !result\.user\.emailVerified/, 'Le résultat doit valider immédiatement le compte officiel vérifié.');
+assert.match(admin, /await signOut\(auth\)/, 'Une compte refusée doit être déconnectée.');
+assert.match(admin, /auth\/popup-blocked/, 'Le blocage de popup doit avoir un message spécifique.');
+assert.match(admin, /auth\/popup-closed-by-user/, 'L’annulation de popup doit avoir un message spécifique.');
+assert.match(admin, /onClick=\{login\}/, 'La popup ne doit démarrer que depuis le clic utilisateur.');
+assert.match(admin, /onClick=\{\(\) => signOut\(auth\)\}/, 'La fermeture de session doit rester disponible.');
+assert.doesNotMatch(admin, /signInWithRedirect|getRedirectResult|location\.hash/, 'Aucune logique de redirection ou route pending ne doit subsister.');
 
-console.log('Flux auth vérifié : accès ÉQUIPE, redirection, retour global, persistance, déconnexion et rejet de compte.');
+console.log('Flux popup vérifié : sélecteur, autorisation, rejet, persistance, déconnexion, blocage et annulation.');

@@ -1,5 +1,5 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
-import { GoogleAuthProvider, signInWithRedirect, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signOut, User } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { LogIn, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { auth, authPersistenceReady } from '../firebase';
@@ -7,7 +7,7 @@ import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettin
 import { deleteCourse, deleteGalleryPhoto, deleteVideo, initializeFirestoreContent, saveCourse, saveGalleryPhoto, saveMembershipTerms, saveRegistrationProcess, saveSiteSettingsToCloud, saveVideo } from '../services/firestoreService';
 
 type Tab = 'general' | 'courses' | 'registration' | 'terms' | 'photos' | 'videos';
-interface Props { settings: SiteSettings; courses: DanceClass[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms; user: User | null; authLoading: boolean; authMessage: string; authError: string }
+interface Props { settings: SiteSettings; courses: DanceClass[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms; user: User | null; authLoading: boolean; authError: string; onAuthorized: (user: User) => void }
 const inputClass = 'mt-1 w-full rounded-xl border border-zinc-300 bg-transparent p-2 dark:border-zinc-700';
 const extractYouTubeId = (value: string) => {
   const match = value.trim().match(/^(?:https:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/))([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/);
@@ -16,11 +16,13 @@ const extractYouTubeId = (value: string) => {
 
 const authErrorMessage = (caught: unknown) => {
   const code = caught instanceof FirebaseError ? caught.code : 'auth/unknown-error';
+  if (code === 'auth/popup-blocked') return 'Le navigateur a bloqué la fenêtre Google. Autorisez les fenêtres émergentes pour cette Preview puis réessayez. Code Firebase : auth/popup-blocked.';
+  if (code === 'auth/popup-closed-by-user') return 'La connexion Google a été annulée. Code Firebase : auth/popup-closed-by-user.';
   return `La connexion sécurisée avec Google a échoué. Veuillez réessayer ou contacter la personne responsable du site. Code Firebase : ${code}.`;
 };
 
-export function SimpleAdmin({ settings, courses, photos, videos, registration, terms, user, authLoading, authMessage, authError }: Props) {
-  const [redirecting, setRedirecting] = useState(false);
+export function SimpleAdmin({ settings, courses, photos, videos, registration, terms, user, authLoading, authError, onAuthorized }: Props) {
+  const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('general');
   const [message, setMessage] = useState('');
@@ -28,17 +30,22 @@ export function SimpleAdmin({ settings, courses, photos, videos, registration, t
 
   const login = async () => {
     setError('');
-    setRedirecting(true);
+    setAuthenticating(true);
     try {
       await authPersistenceReady;
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      window.location.hash = 'administration';
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email !== 'association.lamaloka@gmail.com' || !result.user.emailVerified) {
+        await signOut(auth);
+        setError('Ce compte Google n’est pas autorisé à administrer La Maloka.');
+        return;
+      }
+      onAuthorized(result.user);
     } catch (caught) {
-      setRedirecting(false);
       setError(authErrorMessage(caught));
+    } finally {
+      setAuthenticating(false);
     }
   };
 
@@ -50,13 +57,12 @@ export function SimpleAdmin({ settings, courses, photos, videos, registration, t
     finally { setInitializing(false); }
   };
 
-  if (redirecting) return <Status text="Redirection sécurisée vers Google…" />;
+  if (authenticating) return <Status text="Connexion sécurisée avec Google…" />;
   if (authLoading) return <Status text="Vérification de la connexion sécurisée…" />;
   if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Connexion sécurisée avec Google. Sélectionnez le compte officiel de l’association.</p>{(error || authError) && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error || authError}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
 
   const tabs: Array<[Tab, string]> = [['general', 'Informations générales'], ['courses', 'Cours, tarifs et inscriptions'], ['registration', 'Procédure d’inscription'], ['terms', 'Conditions générales d’adhésion'], ['photos', 'Photos'], ['videos', 'Vidéos YouTube']];
   return <section className="mx-auto max-w-7xl space-y-6 px-4 py-10">
-    {authMessage.startsWith('Connexion réussie') && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm dark:bg-emerald-950/30">{authMessage}</p>}
     <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm text-emerald-600">Connecté : {user.email}</p><h1 className="text-3xl font-black">ÉQUIPE — Administration</h1></div><button onClick={() => signOut(auth)} className="flex items-center gap-2 rounded-xl border px-4 py-2"><LogOut size={16} /> Déconnexion</button></header>
     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"><p className="font-bold">Premier démarrage de Firestore</p><p className="mt-1 text-sm">L’import est idempotent : les collections déjà remplies sont ignorées.</p><button disabled={initializing} onClick={initialize} className="mt-3 rounded-xl bg-amber-600 px-4 py-2 font-bold text-white disabled:opacity-50">{initializing ? 'Initialisation…' : 'Initialiser le contenu'}</button></div>
     {message && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm dark:bg-emerald-950/30">{message}</p>}
