@@ -1,83 +1,98 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { LogIn, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
-import { auth } from '../firebase';
-import { PhotoItem, SiteSettings } from '../types';
-import { deleteGalleryPhoto, saveGalleryPhoto, saveSiteSettingsToCloud } from '../services/firestoreService';
+import { auth, authPersistenceReady } from '../firebase';
+import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
+import { deleteCourse, deleteGalleryPhoto, deleteVideo, initializeFirestoreContent, saveCourse, saveGalleryPhoto, saveMembershipTerms, saveRegistrationProcess, saveSiteSettingsToCloud, saveVideo } from '../services/firestoreService';
 
-interface Props { settings: SiteSettings; photos: PhotoItem[] }
+const ADMIN_EMAIL = 'association.lamaloka@gmail.com';
+type Tab = 'general' | 'courses' | 'registration' | 'terms' | 'photos' | 'videos';
+interface Props { settings: SiteSettings; courses: DanceClass[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms }
+const inputClass = 'mt-1 w-full rounded-xl border border-zinc-300 bg-transparent p-2 dark:border-zinc-700';
+const extractYouTubeId = (value: string) => {
+  const match = value.trim().match(/^(?:https:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/))([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/);
+  return match?.[1] ?? null;
+};
 
-export function SimpleAdmin({ settings, photos }: Props) {
-  const [user, setUser] = useState<User | null>(auth.currentUser);
+export function SimpleAdmin({ settings, courses, photos, videos, registration, terms }: Props) {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState<Tab>('general');
   const [message, setMessage] = useState('');
-  const [form, setForm] = useState(settings);
-  const [photo, setPhoto] = useState({ title: '', url: '', description: '' });
+  const [initializing, setInitializing] = useState(false);
 
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
-  useEffect(() => setForm(settings), [settings]);
+  useEffect(() => onAuthStateChanged(auth, async (current) => {
+    if (current && (current.email !== ADMIN_EMAIL || !current.emailVerified)) {
+      await signOut(auth);
+      setError(`Le compte ${current.email ?? 'sélectionné'} n’est pas autorisé. Connectez-vous avec ${ADMIN_EMAIL}.`);
+      setUser(null);
+    } else setUser(current);
+    setAuthLoading(false);
+  }), []);
 
   const login = async () => {
     setError('');
     try {
+      await authPersistenceReady;
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ login_hint: 'association.lamaloka@gmail.com' });
-      await signInWithPopup(auth, provider);
-    } catch {
-      setError('La connexion avec Google a échoué. Réessayez avec le compte association.lamaloka@gmail.com ou contactez la personne responsable du site.');
-    }
+      provider.setCustomParameters({ login_hint: ADMIN_EMAIL });
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email !== ADMIN_EMAIL || !result.user.emailVerified) {
+        await signOut(auth);
+        setError(`Ce compte n’est pas autorisé. Utilisez le compte Google vérifié ${ADMIN_EMAIL}.`);
+      }
+    } catch { setError(`La connexion avec Google a échoué. Réessayez avec ${ADMIN_EMAIL}.`); }
   };
 
-  const save = async (event: FormEvent) => {
-    event.preventDefault();
-    setMessage('Enregistrement…');
-    try {
-      await saveSiteSettingsToCloud(form);
-      setMessage('Modifications publiées.');
-    } catch {
-      setMessage("Échec de l'enregistrement. Votre compte ne dispose peut-être pas des droits nécessaires.");
-    }
+  const initialize = async () => {
+    if (!window.confirm('Initialiser uniquement les collections Firestore encore vides avec le contenu actuel ?')) return;
+    setInitializing(true); setMessage('Initialisation en cours…');
+    try { setMessage(`Initialisation terminée : ${(await initializeFirestoreContent()).join(' · ')}`); }
+    catch { setMessage("Échec de l’initialisation. Vérifiez les règles Firestore et réessayez."); }
+    finally { setInitializing(false); }
   };
 
-  const addPhoto = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!photo.title.trim() || !photo.url.startsWith('https://')) return;
-    await saveGalleryPhoto({ id: crypto.randomUUID(), ...photo, category: 'Association', date: new Date().toISOString().slice(0, 10) });
-    setPhoto({ title: '', url: '', description: '' });
-  };
+  if (authLoading) return <Status text="Vérification de l’accès…" />;
+  if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Réservé au compte Google vérifié de l’association.</p>{error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
 
-  if (!user) return (
-    <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16">
-      <div className="w-full space-y-5 rounded-3xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-        <ShieldCheck className="text-emerald-500" size={36} /><div><h1 className="text-2xl font-black">Accès équipe</h1><p className="mt-2 text-sm text-zinc-500">Connectez-vous avec le compte Google de l'association.</p></div>
-        {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
-        <button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button>
-      </div>
-    </section>
-  );
-
-  return (
-    <section className="mx-auto max-w-5xl space-y-8 px-4 py-12">
-      <header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm text-emerald-600">Connecté : {user.email}</p><h1 className="text-3xl font-black">Administration du contenu</h1></div><button onClick={() => signOut(auth)} className="flex items-center gap-2 rounded-xl border px-4 py-2"><LogOut size={16} /> Déconnexion</button></header>
-      <form onSubmit={save} className="grid gap-5 rounded-3xl border border-zinc-200 p-6 dark:border-zinc-800 md:grid-cols-2">
-        <h2 className="text-xl font-black md:col-span-2">Informations principales</h2>
-        <Field label="Titre principal" value={form.heroHeadline} onChange={(heroHeadline) => setForm({ ...form, heroHeadline })} />
-        <Field label="Sous-titre" value={form.heroSubheadline} onChange={(heroSubheadline) => setForm({ ...form, heroSubheadline })} />
-        <Field label="Email public" type="email" value={form.contactEmail} onChange={(contactEmail) => setForm({ ...form, contactEmail })} />
-        <Field label="Téléphone public" value={form.contactPhone} onChange={(contactPhone) => setForm({ ...form, contactPhone })} />
-        <button className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 p-3 font-bold text-white md:col-span-2"><Save size={17} /> Publier les modifications</button>
-        {message && <p role="status" className="text-sm md:col-span-2">{message}</p>}
-      </form>
-
-      <div className="rounded-3xl border border-zinc-200 p-6 dark:border-zinc-800">
-        <h2 className="mb-5 text-xl font-black">Galerie publique</h2>
-        <form onSubmit={addPhoto} className="grid gap-3 md:grid-cols-3"><input required placeholder="Titre" value={photo.title} onChange={(e) => setPhoto({ ...photo, title: e.target.value })} className="rounded-xl border bg-transparent p-3 dark:border-zinc-700" /><input required type="url" placeholder="https://…" value={photo.url} onChange={(e) => setPhoto({ ...photo, url: e.target.value })} className="rounded-xl border bg-transparent p-3 dark:border-zinc-700" /><button className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 p-3 font-bold text-white"><Plus size={17} /> Ajouter</button></form>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">{photos.map((item) => <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-zinc-100 p-3 dark:bg-zinc-800"><img src={item.url} alt="" className="h-14 w-14 rounded-xl object-cover" /><span className="min-w-0 flex-1 truncate font-semibold">{item.title}</span><button onClick={() => deleteGalleryPhoto(item.id)} aria-label={`Supprimer ${item.title}`} className="p-2 text-rose-600"><Trash2 size={17} /></button></div>)}</div>
-      </div>
-    </section>
-  );
+  const tabs: Array<[Tab, string]> = [['general', 'Informations générales'], ['courses', 'Cours, tarifs et inscriptions'], ['registration', 'Procédure d’inscription'], ['terms', 'Conditions générales d’adhésion'], ['photos', 'Photos'], ['videos', 'Vidéos YouTube']];
+  return <section className="mx-auto max-w-7xl space-y-6 px-4 py-10">
+    <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm text-emerald-600">Connecté : {user.email}</p><h1 className="text-3xl font-black">ÉQUIPE — Administration</h1></div><button onClick={() => signOut(auth)} className="flex items-center gap-2 rounded-xl border px-4 py-2"><LogOut size={16} /> Déconnexion</button></header>
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"><p className="font-bold">Premier démarrage de Firestore</p><p className="mt-1 text-sm">L’import est idempotent : les collections déjà remplies sont ignorées.</p><button disabled={initializing} onClick={initialize} className="mt-3 rounded-xl bg-amber-600 px-4 py-2 font-bold text-white disabled:opacity-50">{initializing ? 'Initialisation…' : 'Initialiser le contenu'}</button></div>
+    {message && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm dark:bg-emerald-950/30">{message}</p>}
+    <nav aria-label="Sections du backoffice" className="flex gap-2 overflow-x-auto pb-2">{tabs.map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-bold ${tab === id ? 'bg-rose-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800'}`}>{label}</button>)}</nav>
+    {tab === 'general' && <GeneralEditor value={settings} notify={setMessage} />}
+    {tab === 'courses' && <CourseEditor items={courses} notify={setMessage} />}
+    {tab === 'registration' && <RegistrationEditor value={registration} notify={setMessage} />}
+    {tab === 'terms' && <TermsEditor value={terms} notify={setMessage} />}
+    {tab === 'photos' && <PhotoEditor items={photos} notify={setMessage} />}
+    {tab === 'videos' && <VideoEditor items={videos} notify={setMessage} />}
+  </section>;
 }
 
-function Field({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; type?: string }) {
-  return <label className="text-sm font-semibold">{label}<input type={type} required value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-xl border border-zinc-300 bg-transparent p-3 dark:border-zinc-700" /></label>;
-}
+function Status({ text }: { text: string }) { return <p role="status" className="mx-auto min-h-[60vh] max-w-xl p-16 text-center">{text}</p>; }
+function Field({ label, value, onChange, type = 'text', required = true }: { key?: string; label: string; value: string | number; onChange: (value: string) => void; type?: string; required?: boolean }) { return <label className="text-sm font-semibold">{label}<input className={inputClass} type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} /></label>; }
+function SaveButton({ label = 'Enregistrer' }: { label?: string }) { return <button className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 p-3 font-bold text-white"><Save size={17} /> {label}</button>; }
+const notifySave = async (action: () => Promise<unknown>, notify: (text: string) => void) => { notify('Enregistrement…'); try { await action(); notify('Enregistrement réussi.'); } catch { notify("Erreur lors de l’enregistrement. Vérifiez les champs et vos droits."); } };
+
+function GeneralEditor({ value, notify }: { value: SiteSettings; notify: (text: string) => void }) { const [form, setForm] = useState(value); useEffect(() => setForm(value), [value]); return <form onSubmit={(e) => { e.preventDefault(); notifySave(() => saveSiteSettingsToCloud(form), notify); }} className="grid gap-4 rounded-3xl border p-6 md:grid-cols-2"><Field label="Titre principal" value={form.heroHeadline} onChange={(heroHeadline) => setForm({ ...form, heroHeadline })} /><Field label="Sous-titre" value={form.heroSubheadline} onChange={(heroSubheadline) => setForm({ ...form, heroSubheadline })} /><Field label="Email public" type="email" value={form.contactEmail} onChange={(contactEmail) => setForm({ ...form, contactEmail })} /><Field label="Téléphone public" value={form.contactPhone} onChange={(contactPhone) => setForm({ ...form, contactPhone })} /><div className="md:col-span-2"><SaveButton /></div></form>; }
+
+const blankCourse = (): DanceClass => ({ id: crypto.randomUUID(), name: '', description: '', category: '', level: '', instructor: '', schedule: '', location: '', image: '', season: '', priceMonthly: 0, annualPrice: 0, isFree: false, helloAssoUrl: '', active: true, order: 0 });
+function CourseEditor({ items, notify }: { items: DanceClass[]; notify: (text: string) => void }) { const [draft, setDraft] = useState<DanceClass | null>(null); return <CollectionLayout title="Cours" onAdd={() => setDraft({ ...blankCourse(), order: items.length })}>{draft && <CourseForm value={draft} cancel={() => setDraft(null)} save={(item) => notifySave(async () => { await saveCourse(item); setDraft(null); }, notify)} />}{items.map((item) => <ItemRow key={item.id} title={item.name} detail={`${item.annualPrice ?? 0} € · ordre ${item.order ?? 0} · ${item.active === false ? 'inactif' : 'actif'}`} edit={() => setDraft(item)} remove={async () => { if (confirm(`Supprimer le cours « ${item.name} » ?`)) await notifySave(() => deleteCourse(item.id), notify); }} />)}</CollectionLayout>; }
+function CourseForm({ value, save, cancel }: { value: DanceClass; save: (value: DanceClass) => void; cancel: () => void }) { const [f, setF] = useState(value); const fields: Array<[string, keyof DanceClass]> = [['Nom', 'name'], ['Description', 'description'], ['Discipline / catégorie', 'category'], ['Niveau', 'level'], ['Professeur', 'instructor'], ['Horaire', 'schedule'], ['Lieu', 'location'], ['Image HTTPS', 'image'], ['Saison', 'season'], ['Lien HelloAsso HTTPS', 'helloAssoUrl']]; return <form onSubmit={(e) => { e.preventDefault(); save(f); }} className="grid gap-3 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900 md:grid-cols-2">{fields.map(([label, key]) => <Field key={key} label={label} required={key !== 'helloAssoUrl'} value={String(f[key] ?? '')} onChange={(v) => setF({ ...f, [key]: v })} />)}<Field label="Prix annuel" type="number" value={f.annualPrice ?? 0} onChange={(v) => setF({ ...f, annualPrice: Number(v) })} /><Field label="Ordre" type="number" value={f.order ?? 0} onChange={(v) => setF({ ...f, order: Number(v) })} /><Checks active={f.active !== false} free={f.isFree === true} setActive={(active) => setF({ ...f, active })} setFree={(isFree) => setF({ ...f, isFree, annualPrice: isFree ? 0 : f.annualPrice })} /><Actions cancel={cancel} /></form>; }
+
+function RegistrationEditor({ value, notify }: { value: RegistrationProcess; notify: (text: string) => void }) { const [f, setF] = useState(value); useEffect(() => setF(value), [value]); return <form onSubmit={(e) => { e.preventDefault(); notifySave(() => saveRegistrationProcess(f), notify); }} className="space-y-4 rounded-3xl border p-6"><Field label="Titre" value={f.title} onChange={(title) => setF({ ...f, title })} />{[...f.steps].sort((a,b) => a.order-b.order).map((step, index) => <div key={step.id} className="grid gap-2 md:grid-cols-[1fr_7rem_auto]"><Field label={`Étape ${index + 1}`} value={step.text} onChange={(text) => setF({ ...f, steps: f.steps.map((s) => s.id === step.id ? { ...s, text } : s) })} /><Field label="Ordre" type="number" value={step.order} onChange={(order) => setF({ ...f, steps: f.steps.map((s) => s.id === step.id ? { ...s, order: Number(order) } : s) })} /><button type="button" aria-label={`Supprimer l’étape ${index + 1}`} onClick={() => confirm('Supprimer cette étape ?') && setF({ ...f, steps: f.steps.filter((s) => s.id !== step.id) })} className="self-end p-3 text-rose-600"><Trash2 /></button></div>)}<button type="button" onClick={() => setF({ ...f, steps: [...f.steps, { id: crypto.randomUUID(), text: '', order: f.steps.length }] })} className="flex gap-2 rounded-xl border px-4 py-2"><Plus /> Ajouter une étape</button><Field label="Note finale" value={f.finalNote} onChange={(finalNote) => setF({ ...f, finalNote })} /><label className="flex gap-2"><input type="checkbox" checked={f.visible} onChange={(e) => setF({ ...f, visible: e.target.checked })} /> Section visible</label><SaveButton /></form>; }
+
+function TermsEditor({ value, notify }: { value: MembershipTerms; notify: (text: string) => void }) { const [f, setF] = useState(value); useEffect(() => setF(value), [value]); return <form onSubmit={(e) => { e.preventDefault(); notifySave(() => saveMembershipTerms(f), notify); }} className="space-y-4 rounded-3xl border p-6"><Field label="Titre" value={f.title} onChange={(title) => setF({ ...f, title })} /><Field label="Sous-titre" value={f.subtitle} onChange={(subtitle) => setF({ ...f, subtitle })} /><Field label="Mise à jour" value={f.lastUpdated} onChange={(lastUpdated) => setF({ ...f, lastUpdated })} />{[...f.sections].sort((a,b) => a.order-b.order).map((section) => <div key={section.id} className="space-y-2 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900"><Field label="Titre de l’article" value={section.title} onChange={(title) => setF({ ...f, sections: f.sections.map((s) => s.id === section.id ? { ...s, title } : s) })} /><label className="block text-sm font-semibold">Contenu<textarea className={inputClass} rows={4} value={section.content} onChange={(e) => setF({ ...f, sections: f.sections.map((s) => s.id === section.id ? { ...s, content: e.target.value } : s) })} /></label><Field label="Ordre" type="number" value={section.order} onChange={(order) => setF({ ...f, sections: f.sections.map((s) => s.id === section.id ? { ...s, order: Number(order) } : s) })} /><button type="button" onClick={() => confirm('Supprimer cet article ?') && setF({ ...f, sections: f.sections.filter((s) => s.id !== section.id) })} className="text-rose-600">Supprimer</button></div>)}<button type="button" onClick={() => setF({ ...f, sections: [...f.sections, { id: crypto.randomUUID(), title: '', content: '', order: f.sections.length }] })} className="flex gap-2 rounded-xl border px-4 py-2"><Plus /> Ajouter un article</button><label className="flex gap-2"><input type="checkbox" checked={f.visible} onChange={(e) => setF({ ...f, visible: e.target.checked })} /> Conditions visibles</label><SaveButton /></form>; }
+
+const blankPhoto = (order: number): PhotoItem => ({ id: crypto.randomUUID(), title: '', url: '', description: '', category: 'Association', date: '', active: true, order });
+function PhotoEditor({ items, notify }: { items: PhotoItem[]; notify: (text: string) => void }) { const [draft, setDraft] = useState<PhotoItem | null>(null); return <CollectionLayout title="Photos" onAdd={() => setDraft(blankPhoto(items.length))}>{draft && <MediaForm kind="photo" value={draft} save={(v) => notifySave(async () => { await saveGalleryPhoto(v as PhotoItem); setDraft(null); }, notify)} cancel={() => setDraft(null)} />}{items.map((item) => <ItemRow key={item.id} title={item.title} detail={`ordre ${item.order ?? 0} · ${item.active === false ? 'inactive' : 'active'}`} edit={() => setDraft(item)} remove={() => confirm(`Supprimer « ${item.title} » ?`) && notifySave(() => deleteGalleryPhoto(item.id), notify)} />)}</CollectionLayout>; }
+const blankVideo = (order: number): VideoItem => ({ id: crypto.randomUUID(), title: '', category: '', youtubeUrl: '', youtubeId: '', description: '', date: '', active: true, order });
+function VideoEditor({ items, notify }: { items: VideoItem[]; notify: (text: string) => void }) { const [draft, setDraft] = useState<VideoItem | null>(null); return <CollectionLayout title="Vidéos YouTube" onAdd={() => setDraft(blankVideo(items.length))}>{draft && <MediaForm kind="video" value={draft} save={(v) => notifySave(async () => { await saveVideo(v as VideoItem); setDraft(null); }, notify)} cancel={() => setDraft(null)} />}{items.map((item) => <ItemRow key={item.id} title={item.title} detail={`ordre ${item.order ?? 0} · ${item.active === false ? 'inactive' : 'active'}`} edit={() => setDraft(item)} remove={() => confirm(`Supprimer « ${item.title} » ?`) && notifySave(() => deleteVideo(item.id), notify)} />)}</CollectionLayout>; }
+function MediaForm({ kind, value, save, cancel }: { kind: 'photo' | 'video'; value: PhotoItem | VideoItem; save: (value: PhotoItem | VideoItem) => void; cancel: () => void }) { const [f, setF] = useState(value); const [url, setUrl] = useState(kind === 'video' && 'youtubeId' in value && value.youtubeId ? `https://youtu.be/${value.youtubeId}` : kind === 'photo' && 'url' in value ? value.url : ''); const [validation, setValidation] = useState(''); const submit = (e: FormEvent) => { e.preventDefault(); if (kind === 'video') { const id = extractYouTubeId(url); if (!id) return setValidation('URL YouTube invalide. Formats watch, youtu.be et shorts acceptés.'); save({ ...f, youtubeId: id } as VideoItem); } else save({ ...f, url } as PhotoItem); }; return <form onSubmit={submit} className="grid gap-3 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900 md:grid-cols-2"><Field label="Titre" value={f.title} onChange={(title) => setF({ ...f, title })} /><Field label={kind === 'video' ? 'URL YouTube' : 'URL HTTPS'} type="url" value={url} onChange={setUrl} /><Field label="Description" required={false} value={f.description ?? ''} onChange={(description) => setF({ ...f, description })} /><Field label="Date" type="date" required={false} value={f.date ?? ''} onChange={(date) => setF({ ...f, date })} /><Field label="Ordre" type="number" value={f.order ?? 0} onChange={(order) => setF({ ...f, order: Number(order) })} /><label className="flex items-center gap-2"><input type="checkbox" checked={f.active !== false} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Actif</label>{validation && <p role="alert" className="text-rose-600 md:col-span-2">{validation}</p>}<Actions cancel={cancel} /></form>; }
+
+function CollectionLayout({ title, onAdd, children }: { title: string; onAdd: () => void; children: ReactNode }) { return <div className="space-y-3 rounded-3xl border p-6"><div className="flex justify-between"><h2 className="text-xl font-black">{title}</h2><button onClick={onAdd} className="flex gap-2 rounded-xl bg-rose-600 px-4 py-2 font-bold text-white"><Plus /> Ajouter</button></div>{children}</div>; }
+function ItemRow({ title, detail, edit, remove }: { key?: string; title: string; detail: string; edit: () => void; remove: () => void }) { return <div className="flex flex-wrap items-center gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-900"><div className="min-w-0 flex-1"><p className="truncate font-bold">{title}</p><p className="text-xs text-zinc-500">{detail}</p></div><button onClick={edit} className="rounded-lg border px-3 py-2">Modifier</button><button aria-label={`Supprimer ${title}`} onClick={remove} className="p-2 text-rose-600"><Trash2 /></button></div>; }
+function Checks({ active, free, setActive, setFree }: { active: boolean; free: boolean; setActive: (v: boolean) => void; setFree: (v: boolean) => void }) { return <div className="flex gap-5"><label className="flex gap-2"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Actif</label><label className="flex gap-2"><input type="checkbox" checked={free} onChange={(e) => setFree(e.target.checked)} /> Gratuit</label></div>; }
+function Actions({ cancel }: { cancel: () => void }) { return <div className="flex gap-2 md:col-span-2"><SaveButton /><button type="button" onClick={cancel} className="rounded-xl border px-4">Annuler</button></div>; }

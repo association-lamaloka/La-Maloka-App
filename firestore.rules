@@ -1,38 +1,92 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAssociationTeam() {
+    function isAdmin() {
       return request.auth != null
         && request.auth.token.email == 'association.lamaloka@gmail.com'
         && request.auth.token.email_verified == true;
     }
+    function noPassword() { return !request.resource.data.keys().hasAny(['adminPassword']); }
+    function validOrder(value) { return value is int && value >= 0 && value <= 10000; }
+    function optionalHttps(field) { return !(field in request.resource.data) || (request.resource.data[field] is string && (request.resource.data[field] == '' || request.resource.data[field].matches('https://.*'))); }
 
-    // Public landing-page content. Editing is reserved for the association's
-    // verified Google account.
-    match /site_settings/{docId} {
+    match /site_settings/{id} {
       allow read: if true;
-      allow create, update: if isAssociationTeam()
-        && !request.resource.data.keys().hasAny(['adminPassword']);
-      allow delete: if isAssociationTeam();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['heroHeadline', 'heroSubheadline', 'contactEmail', 'contactPhone', 'updatedAt'])
+        && request.resource.data.heroHeadline is string && request.resource.data.heroHeadline.size() <= 160
+        && request.resource.data.heroSubheadline is string && request.resource.data.heroSubheadline.size() <= 300
+        && request.resource.data.contactEmail is string && request.resource.data.contactEmail.size() <= 254
+        && request.resource.data.contactPhone is string && request.resource.data.contactPhone.size() <= 40;
+      allow delete: if isAdmin();
     }
-
-    match /gallery/{photoId} {
+    match /courses/{id} {
       allow read: if true;
-      allow create, update: if isAssociationTeam()
-        && request.resource.data.keys().hasOnly(['id', 'title', 'url', 'description', 'category', 'date'])
-        && request.resource.data.id == photoId
-        && request.resource.data.title is string
-        && request.resource.data.title.size() <= 120
-        && request.resource.data.url is string
-        && request.resource.data.url.matches('https://.*');
-      allow delete: if isAssociationTeam();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','name','description','category','level','instructor','schedule','location','image','season','priceMonthly','annualPrice','isFree','helloAssoUrl','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.name is string && request.resource.data.name.size() <= 180
+        && request.resource.data.description is string && request.resource.data.description.size() <= 2000
+        && request.resource.data.category is string && request.resource.data.category.size() <= 80
+        && request.resource.data.level is string && request.resource.data.level.size() <= 80
+        && request.resource.data.instructor is string && request.resource.data.instructor.size() <= 120
+        && request.resource.data.schedule is string && request.resource.data.schedule.size() <= 160
+        && request.resource.data.location is string && request.resource.data.location.size() <= 180
+        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && request.resource.data.season is string && request.resource.data.season.size() <= 80
+        && request.resource.data.priceMonthly is number && request.resource.data.priceMonthly >= 0
+        && request.resource.data.annualPrice is number && request.resource.data.annualPrice >= 0
+        && request.resource.data.isFree is bool && request.resource.data.active is bool
+        && optionalHttps('helloAssoUrl') && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
     }
-
-    // Legacy collections can contain personal or health data. They are closed
-    // completely while their remote documents are purged by a project owner.
+    match /gallery/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','url','description','date','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 120
+        && request.resource.data.url is string && request.resource.data.url.matches('https://.*')
+        && request.resource.data.description is string && request.resource.data.description.size() <= 1000
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /videos/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','youtubeId','description','date','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && request.resource.data.youtubeId is string && request.resource.data.youtubeId.matches('^[A-Za-z0-9_-]{11}$')
+        && request.resource.data.description is string && request.resource.data.description.size() <= 1000
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /registration_process/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['title','steps','finalNote','visible'])
+        && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && request.resource.data.steps is list && request.resource.data.steps.size() <= 20
+        && request.resource.data.finalNote is string && request.resource.data.finalNote.size() <= 1000
+        && request.resource.data.visible is bool;
+      allow delete: if isAdmin();
+    }
+    match /membership_terms/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['title','subtitle','lastUpdated','sections','visible'])
+        && request.resource.data.title is string && request.resource.data.title.size() <= 180
+        && request.resource.data.subtitle is string && request.resource.data.subtitle.size() <= 300
+        && request.resource.data.lastUpdated is string && request.resource.data.lastUpdated.size() <= 80
+        && request.resource.data.sections is list && request.resource.data.sections.size() <= 30
+        && request.resource.data.visible is bool;
+      allow delete: if isAdmin();
+    }
     match /inscriptions/{document=**} { allow read, write: if false; }
     match /health_forms/{document=**} { allow read, write: if false; }
-
     match /{document=**} { allow read, write: if false; }
   }
 }

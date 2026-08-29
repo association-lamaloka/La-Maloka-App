@@ -195,6 +195,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
             </div>
 
             <div className="pt-2 border-t border-zinc-900">
+              <button onClick={() => setCurrentTab('conditions')} className="mb-2 block text-[11px] text-zinc-400 hover:text-rose-400">Conditions générales d’adhésion</button>
               <button
                 onClick={() => {
                   setCurrentTab('administration');

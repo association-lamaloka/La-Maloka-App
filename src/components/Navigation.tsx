@@ -13,7 +13,7 @@ const items = [
   { id: 'accueil', label: 'Accueil' },
   { id: 'cours', label: 'Cours' },
   { id: 'agenda', label: 'Agenda' },
-  { id: 'galerie', label: 'Photos' },
+  { id: 'galerie', label: 'Photos & Vidéos' },
 ];
 
 export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMode }: NavigationProps) {

@@ -19,6 +19,8 @@ export interface DanceClass {
   description: string;
   priceMonthly: number;
   annualPrice?: number;
+  isFree?: boolean;
+  order?: number;
   image: string;
   category: 'Salsa Cubaine' | 'Cardio Latino' | string;
   location: 'Fontenay-le-Fleury' | 'La Queue-les-Yvelines' | string;
@@ -68,6 +70,8 @@ export interface PhotoItem {
   description: string;
   date?: string;
   likes?: number;
+  active?: boolean;
+  order?: number;
 }
 
 export interface VideoItem {
@@ -83,6 +87,23 @@ export interface VideoItem {
   date?: string;
   featured?: boolean;
   likes?: number;
+  active?: boolean;
+  order?: number;
+}
+
+export interface RegistrationProcess {
+  title: string;
+  steps: Array<{ id: string; text: string; order: number }>;
+  finalNote: string;
+  visible: boolean;
+}
+
+export interface MembershipTerms {
+  title: string;
+  subtitle: string;
+  lastUpdated: string;
+  sections: Array<{ id: string; title: string; content: string; order: number }>;
+  visible: boolean;
 }
 
 export interface HomepageVignette {
@@ -191,4 +212,3 @@ export interface SiteSettings {
     allowOnlineRegistrations: boolean;
   };
 }
-

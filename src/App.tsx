@@ -5,17 +5,21 @@ import { Footer } from './components/Footer';
 import { SimpleAdmin } from './components/SimpleAdmin';
 import { LandingContent } from './components/LandingContent';
 import { TropicalPatternBG } from './components/TropicalDecorations';
-import { DEFAULT_SITE_SETTINGS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
-import { PhotoItem, SiteSettings } from './types';
-import { subscribeGallery, subscribeSiteSettings } from './services/firestoreService';
+import { DEFAULT_MEMBERSHIP_TERMS, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
+import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
+import { subscribeCourses, subscribeGallery, subscribeMembershipTerms, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
 
-type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'administration';
+type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'conditions' | 'administration';
 
 export default function App() {
   const [view, setView] = useState<View>('accueil');
   const [darkMode, setDarkMode] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [photos, setPhotos] = useState<PhotoItem[]>(PHOTO_GALLERY);
+  const [courses, setCourses] = useState<DanceClass[]>(DANCE_CLASSES);
+  const [videos, setVideos] = useState<VideoItem[]>(DEFAULT_VIDEOS);
+  const [registration, setRegistration] = useState<RegistrationProcess>(DEFAULT_REGISTRATION_PROCESS);
+  const [terms, setTerms] = useState<MembershipTerms>(DEFAULT_MEMBERSHIP_TERMS);
 
   useEffect(() => {
     // Remove legacy caches that may contain member data or shared credentials.
@@ -31,9 +35,17 @@ export default function App() {
 
     const unsubscribeSettings = subscribeSiteSettings(setSettings);
     const unsubscribeGallery = subscribeGallery(setPhotos);
+    const unsubscribeCourses = subscribeCourses(setCourses);
+    const unsubscribeVideos = subscribeVideos(setVideos);
+    const unsubscribeRegistration = subscribeRegistrationProcess(setRegistration);
+    const unsubscribeTerms = subscribeMembershipTerms(setTerms);
     return () => {
       unsubscribeSettings();
       unsubscribeGallery();
+      unsubscribeCourses();
+      unsubscribeVideos();
+      unsubscribeRegistration();
+      unsubscribeTerms();
     };
   }, []);
 
@@ -65,11 +77,12 @@ export default function App() {
             onViewRegistrationDates={() => navigate('cours')}
           />
         )}
-        {view === 'cours' && <LandingContent section="cours" classes={DANCE_CLASSES} />}
+        {view === 'cours' && <LandingContent section="cours" classes={courses} registration={registration} terms={terms} onShowTerms={() => navigate('conditions')} />}
         {view === 'agenda' && <LandingContent section="agenda" events={DANCE_EVENTS} />}
-        {view === 'galerie' && <LandingContent section="galerie" photos={photos} />}
+        {view === 'galerie' && <LandingContent section="galerie" photos={photos} videos={videos} />}
+        {view === 'conditions' && <LandingContent section="conditions" terms={terms} onBack={() => navigate('cours')} />}
         {view === 'administration' && (
-          <SimpleAdmin settings={settings} photos={photos} />
+          <SimpleAdmin settings={settings} courses={courses} photos={photos} videos={videos} registration={registration} terms={terms} />
         )}
       </main>
 

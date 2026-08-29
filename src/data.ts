@@ -1,4 +1,4 @@
-import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData } from './types';
+import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData, MembershipTerms, RegistrationProcess } from './types';
 
 export const GENERATED_HERO_IMAGE = 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1200';
 export const GENERATED_MOTION_IMAGE = 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=1200';
@@ -516,6 +516,25 @@ export const DEFAULT_GENERAL_CONDITIONS: GeneralConditionsData = {
       content: "L'association a souscrit une police d'assurance responsabilité civile pour ses activités. Chaque adhérent est également encouragé à vérifier la couverture de son assurance responsabilité civile personnelle et garantie individuelle accident."
     }
   ]
+};
+
+export const DEFAULT_REGISTRATION_PROCESS: RegistrationProcess = {
+  title: 'Comment s’inscrire ?',
+  steps: [
+    'Choisir le cours et l’horaire souhaités.',
+    'Cliquer sur “S’inscrire”.',
+    'Compléter le formulaire sécurisé sur HelloAsso.',
+    'Régler la cotisation ou suivre les modalités proposées.',
+    'Recevoir la confirmation d’inscription par e-mail.',
+  ].map((text, index) => ({ id: `step-${index + 1}`, text, order: index })),
+  finalNote: 'Pour un cours d’essai, utilisez le lien dédié lorsqu’il est disponible ou contactez l’association.',
+  visible: true,
+};
+
+export const DEFAULT_MEMBERSHIP_TERMS: MembershipTerms = {
+  ...DEFAULT_GENERAL_CONDITIONS,
+  sections: DEFAULT_GENERAL_CONDITIONS.sections.map((section, order) => ({ ...section, order })),
+  visible: true,
 };
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
