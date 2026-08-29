@@ -1,14 +1,13 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
-import { GoogleAuthProvider, getRedirectResult, onAuthStateChanged, signInWithRedirect, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, signOut, User } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { LogIn, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { auth, authPersistenceReady } from '../firebase';
 import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
 import { deleteCourse, deleteGalleryPhoto, deleteVideo, initializeFirestoreContent, saveCourse, saveGalleryPhoto, saveMembershipTerms, saveRegistrationProcess, saveSiteSettingsToCloud, saveVideo } from '../services/firestoreService';
 
-const ADMIN_EMAIL = 'association.lamaloka@gmail.com';
 type Tab = 'general' | 'courses' | 'registration' | 'terms' | 'photos' | 'videos';
-interface Props { settings: SiteSettings; courses: DanceClass[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms }
+interface Props { settings: SiteSettings; courses: DanceClass[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms; user: User | null; authLoading: boolean; authMessage: string; authError: string }
 const inputClass = 'mt-1 w-full rounded-xl border border-zinc-300 bg-transparent p-2 dark:border-zinc-700';
 const extractYouTubeId = (value: string) => {
   const match = value.trim().match(/^(?:https:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/))([A-Za-z0-9_-]{11})(?:[?&#/].*)?$/);
@@ -20,42 +19,12 @@ const authErrorMessage = (caught: unknown) => {
   return `La connexion sécurisée avec Google a échoué. Veuillez réessayer ou contacter la personne responsable du site. Code Firebase : ${code}.`;
 };
 
-export function SimpleAdmin({ settings, courses, photos, videos, registration, terms }: Props) {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+export function SimpleAdmin({ settings, courses, photos, videos, registration, terms, user, authLoading, authMessage, authError }: Props) {
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('general');
   const [message, setMessage] = useState('');
   const [initializing, setInitializing] = useState(false);
-
-  useEffect(() => {
-    let unsubscribe = () => {};
-    const authorize = async (current: User | null) => {
-      if (current && (current.email !== ADMIN_EMAIL || !current.emailVerified)) {
-        await signOut(auth);
-        setError('Ce compte Google n’est pas autorisé à administrer La Maloka.');
-        setUser(null);
-        return;
-      }
-      setUser(current);
-    };
-    const processRedirect = async () => {
-      try {
-        await authPersistenceReady;
-        const result = await getRedirectResult(auth);
-        if (result) await authorize(result.user);
-        unsubscribe = onAuthStateChanged(auth, authorize);
-      } catch (caught) {
-        setError(authErrorMessage(caught));
-      } finally {
-        setAuthLoading(false);
-        setRedirecting(false);
-      }
-    };
-    void processRedirect();
-    return () => unsubscribe();
-  }, []);
 
   const login = async () => {
     setError('');
@@ -64,6 +33,7 @@ export function SimpleAdmin({ settings, courses, photos, videos, registration, t
       await authPersistenceReady;
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
+      window.location.hash = 'administration';
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await signInWithRedirect(auth, provider);
     } catch (caught) {
@@ -81,11 +51,12 @@ export function SimpleAdmin({ settings, courses, photos, videos, registration, t
   };
 
   if (redirecting) return <Status text="Redirection sécurisée vers Google…" />;
-  if (authLoading) return <Status text="Vérification de l’accès…" />;
-  if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Connexion sécurisée avec Google. Sélectionnez le compte officiel de l’association.</p>{error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
+  if (authLoading) return <Status text="Vérification de la connexion sécurisée…" />;
+  if (!user) return <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16"><div className="w-full space-y-5 rounded-3xl border bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"><ShieldCheck className="text-emerald-500" size={36} /><h1 className="text-2xl font-black">Accès équipe</h1><p className="text-sm text-zinc-500">Connexion sécurisée avec Google. Sélectionnez le compte officiel de l’association.</p>{(error || authError) && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">{error || authError}</p>}<button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button></div></section>;
 
   const tabs: Array<[Tab, string]> = [['general', 'Informations générales'], ['courses', 'Cours, tarifs et inscriptions'], ['registration', 'Procédure d’inscription'], ['terms', 'Conditions générales d’adhésion'], ['photos', 'Photos'], ['videos', 'Vidéos YouTube']];
   return <section className="mx-auto max-w-7xl space-y-6 px-4 py-10">
+    {authMessage.startsWith('Connexion réussie') && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm dark:bg-emerald-950/30">{authMessage}</p>}
     <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm text-emerald-600">Connecté : {user.email}</p><h1 className="text-3xl font-black">ÉQUIPE — Administration</h1></div><button onClick={() => signOut(auth)} className="flex items-center gap-2 rounded-xl border px-4 py-2"><LogOut size={16} /> Déconnexion</button></header>
     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"><p className="font-bold">Premier démarrage de Firestore</p><p className="mt-1 text-sm">L’import est idempotent : les collections déjà remplies sont ignorées.</p><button disabled={initializing} onClick={initialize} className="mt-3 rounded-xl bg-amber-600 px-4 py-2 font-bold text-white disabled:opacity-50">{initializing ? 'Initialisation…' : 'Initialiser le contenu'}</button></div>
     {message && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm dark:bg-emerald-950/30">{message}</p>}
