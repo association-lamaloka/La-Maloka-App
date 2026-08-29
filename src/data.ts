@@ -1,4 +1,4 @@
-import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, ExclusiveMaterial, DanceRoom, PricingPlan, GeneralConditionsData } from './types';
+import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData } from './types';
 
 export const GENERATED_HERO_IMAGE = 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1200';
 export const GENERATED_MOTION_IMAGE = 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=1200';
@@ -612,12 +612,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     type: 'urgent',
     badge: 'Annonce Urgente',
     title: 'Rentrée 2026-2027 & Forums',
-    message: 'Inscriptions prioritaires ouvertes pour Salsa Cubaine & Cardio Latino à Fontenay et La Queue-les-Yvelines !',
-    linkText: 'Voir les Inscriptions',
-    linkAction: 'clases',
+    message: 'Découvrez la Salsa Cubaine et le Cardio Latino à Fontenay et La Queue-les-Yvelines !',
+    linkText: 'Voir les cours',
+    linkAction: 'cours',
     isDismissible: true
   },
-  adminPassword: 'MALOKA-ADMIN-78',
   moduleToggles: {
     showRegistrationBanner: true,
     showPhotoGallery: true,
@@ -626,17 +625,3 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     allowOnlineRegistrations: false
   }
 };
-
-export const EXCLUSIVE_MATERIALS: ExclusiveMaterial[] = [
-  {
-    id: 'm1',
-    title: 'Vidéo : Routine Salsa Cubaine & Pasitos',
-    type: 'video',
-    category: 'Salsa Cubaine',
-    description: 'Décomposition pas à pas des passes de base et guidage.',
-    downloadUrl: '#video-salsa',
-    duration: '15 min',
-    author: 'Yasmilka Valdés',
-    thumbnail: 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=400'
-  }
-];

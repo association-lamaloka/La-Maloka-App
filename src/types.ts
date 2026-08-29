@@ -183,7 +183,6 @@ export interface SiteSettings {
   pricingPlans?: PricingPlan[];
   generalConditions?: GeneralConditionsData;
   urgentBanner?: UrgentBanner;
-  adminPassword?: string;
   moduleToggles: {
     showRegistrationBanner: boolean;
     showPhotoGallery: boolean;
@@ -192,85 +191,4 @@ export interface SiteSettings {
     allowOnlineRegistrations: boolean;
   };
 }
-
-export interface Inscription {
-  id: string;
-  userName: string;
-  userEmail: string;
-  userPhone: string;
-  classId: string;
-  className: string;
-  level: string;
-  status: 'Attente de Confirmation' | 'Confirmée' | 'Liste d\'attente' | 'Annulée' | string;
-  type?: 'Inscription Annuelle' | "Cours d'essai" | 'Liste d\'attente' | string;
-  season?: string;
-  date: string;
-  amountPaid?: number;
-  paymentMethod?: 'HelloAsso' | 'Chèque' | 'Espèces' | 'Virement' | 'Gratuit' | string;
-  paymentStatus?: 'Payé' | 'En attente' | 'Non requis' | string;
-  orderRef?: string;
-  notes?: string;
-}
-
-export interface HealthForm {
-  id: string;
-  userName: string;
-  userEmail: string;
-  birthDate: string;
-  phone: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  hasHeartConditions: boolean;
-  hasBoneJointProblems: boolean;
-  hasDizzinessLossOfBalance: boolean;
-  otherMedicalConditions: string;
-  acceptsTerms: boolean;
-  signature: string;
-  date: string;
-  status?: 'Validé' | 'En attente' | 'Vérification requise';
-}
-
-export interface NotificationItem {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: 'evento' | 'clase' | 'pago' | 'alerta';
-  read: boolean;
-}
-
-export interface ExclusiveMaterial {
-  id: string;
-  title: string;
-  type: 'video' | 'musica' | 'guia';
-  category: 'Salsa Cubaine' | 'Cardio Latino' | 'Étirements';
-  description: string;
-  downloadUrl: string;
-  duration?: string;
-  author: string;
-  thumbnail: string;
-}
-
-export interface PaymentReceipt {
-  id: string;
-  concept: string;
-  amount: number;
-  date: string;
-  status: 'Complété' | 'En attente' | string;
-  paymentMethod: string;
-  userName: string;
-}
-
-export interface AdherentMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  joinDate: string;
-  code: string;
-  status: 'Actif' | 'Expiré';
-  renewalDate: string;
-  lastPaymentDate?: string;
-}
-
 
