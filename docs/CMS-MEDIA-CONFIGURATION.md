@@ -17,6 +17,8 @@ Les photos non structurelles restent dans Drive. Dans Google Drive, ouvrir **Par
 ## Modèle Firestore
 
 - `site_settings/global`: identité, contacts, réseaux, adresses, saison, textes du pied et URLs Blob structurelles.
+- `pages/home`: tous les textes, URLs d’images, boutons, badges et sections publiables de l’accueil.
+- `pages/footer`: description, coordonnées, réseaux, liens, textes légaux et blocs ordonnés du footer.
 - `navigation/main`: libellés, destinations internes, ordre et publication.
 - `courses/{id}`: cours publiables et URL Blob de l'image.
 - `events/{id}`: agenda, prix, liens externes et URL Blob de l'image.

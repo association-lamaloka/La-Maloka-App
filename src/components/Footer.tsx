@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LaMalokaOfficialLogoSVG } from './LaMalokaOfficialLogo';
-import { SiteSettings } from '../types';
+import { FooterContent, SiteSettings } from '../types';
 import { Mail, Phone, MapPin, Clock, Instagram, Facebook, Youtube, MessageCircle, ExternalLink, QrCode } from 'lucide-react';
 import { InstagramQRModal } from './InstagramQRModal';
 import qrImage from '../assets/images/instagram_qr_1786885774879.jpg';
@@ -8,20 +8,24 @@ import qrImage from '../assets/images/instagram_qr_1786885774879.jpg';
 interface FooterProps {
   setCurrentTab: (tab: string) => void;
   siteSettings?: SiteSettings;
+  content: FooterContent;
 }
 
-export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) => {
+export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, content }) => {
   const [showQRModal, setShowQRModal] = useState(false);
-  const email = siteSettings?.contactEmail || 'association.lamaloka@gmail.com';
-  const phone = siteSettings?.contactPhone || '06 12 34 56 78';
+  const email = content.email || siteSettings?.contactEmail || 'association.lamaloka@gmail.com';
+  const phone = content.phone || siteSettings?.contactPhone || '06 12 34 56 78';
   const whatsapp = siteSettings?.contactWhatsApp || phone;
   const contactPerson = siteSettings?.contactPerson || 'Bureau de l\'Association';
   const hours = siteSettings?.contactHours || 'Lundi au Vendredi : 10h00 - 19h30';
   const locationFontenay = siteSettings?.locationFontenay || 'Gymnase du Levant, Fontenay-le-Fleury (78330)';
   const locationLaQueue = siteSettings?.locationLaQueue || 'Salle des Fêtes, La Queue-les-Yvelines (78940)';
-  const facebookUrl = siteSettings?.facebookUrl || 'https://facebook.com/lamaloka78';
-  const instagramUrl = siteSettings?.instagramUrl || 'https://instagram.com/association_la_maloka';
-  const youtubeUrl = siteSettings?.youtubeUrl || 'https://youtube.com/@lamalokadanse';
+  const facebookUrl = content.facebookUrl || siteSettings?.facebookUrl || 'https://facebook.com/lamaloka78';
+  const instagramUrl = content.instagramUrl || siteSettings?.instagramUrl || 'https://instagram.com/association_la_maloka';
+  const youtubeUrl = content.youtubeUrl || siteSettings?.youtubeUrl || 'https://youtube.com/@lamalokadanse';
+  const footerBlock = (id: string) => content.blocks.find((block) => block.id === id);
+  const blockClass = (id: string) => footerBlock(id)?.visible === false ? 'hidden' : '';
+  const blockOrder = (id: string) => footerBlock(id)?.order ?? 0;
 
   return (
     <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-900 py-12 relative overflow-hidden">
@@ -37,7 +41,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 text-left">
           
           {/* Logo Brand Info & Socials */}
-          <div className="space-y-4">
+          <div style={{ order: blockOrder('brand') }} className={`space-y-4 ${blockClass('brand')}`}>
             <div className="flex items-center gap-3 text-white">
               <div className="w-14 h-12 rounded-xl bg-[#95B208] p-1 shadow-md shadow-lime-900/30 flex items-center justify-center shrink-0 overflow-hidden border border-lime-400/40">
                 {siteSettings?.logoUrl ? <img src={siteSettings.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="w-full h-full object-contain" />}
@@ -52,7 +56,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
               </div>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed font-light">
-              Association de Danse Tropicale dédiée à la Salsa Cubaine & au Cardio Latino. Convivialité, rythme et partage à Fontenay-le-Fleury et La Queue-les-Yvelines.
+              {content.description}
             </p>
 
             {/* Social media links & QR Code Scanner */}
@@ -120,7 +124,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
           </div>
 
           {/* Contact Direct */}
-          <div className="space-y-3.5 text-xs text-left">
+          <div style={{ order: blockOrder('contact') }} className={`space-y-3.5 text-xs text-left ${blockClass('contact')}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <Phone size={14} className="text-rose-400" />
               <span>Contact & Renseignements</span>
@@ -158,12 +162,13 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
           </div>
 
           {/* Salles et Adresses */}
-          <div className="space-y-3.5 text-xs text-left">
+          <div style={{ order: blockOrder('locations') }} className={`space-y-3.5 text-xs text-left ${blockClass('locations')}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <MapPin size={14} className="text-emerald-400" />
               <span>Nos Lieux de Pratique</span>
             </h4>
             <div className="space-y-2.5 font-light">
+              {content.address && <p className="text-[11px] text-zinc-300">{content.address}</p>}
               <div className="flex items-start gap-2">
                 <span className="text-rose-400 text-xs mt-0.5 font-bold">📍</span>
                 <div>
@@ -182,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
           </div>
 
           {/* Quick links & Hours */}
-          <div className="space-y-3.5 text-xs text-left">
+          <div style={{ order: blockOrder('links') }} className={`space-y-3.5 text-xs text-left ${blockClass('links')}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <Clock size={14} className="text-amber-400" />
               <span>Permanence & Horaires</span>
@@ -195,7 +200,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
             </div>
 
             <div className="pt-2 border-t border-zinc-900">
-              <button onClick={() => setCurrentTab('conditions')} className="mb-2 block text-[11px] text-zinc-400 hover:text-rose-400">Conditions générales d’adhésion</button>
+              {content.links.filter((link) => link.visible).sort((a,b) => a.order-b.order).map((link) => <button key={link.id} onClick={() => setCurrentTab(link.destination)} className="mb-2 block text-[11px] text-zinc-400 hover:text-rose-400">{link.label}</button>)}
               <button
                 onClick={() => {
                   setCurrentTab('administration');
@@ -213,8 +218,8 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
 
         {/* Legal copyrights bar */}
         <div className="pt-8 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-600 font-light gap-4 text-center sm:text-left">
-          <p>{siteSettings?.copyrightText || '© 2026 Association La Maloka. Salsa Cubaine & Cardio Latino dans les Yvelines.'}</p>
-          {siteSettings?.footerLegalText && <p className="max-w-xl text-[10px]">{siteSettings.footerLegalText}</p>}
+          <p>{content.copyright || siteSettings?.copyrightText}</p>
+          {content.legalNotice && <p className="max-w-xl text-[10px]">{content.legalNotice}</p>}
           <div className="flex gap-4">
             <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500">Fontenay-le-Fleury & La Queue-les-Yvelines</span>
           </div>

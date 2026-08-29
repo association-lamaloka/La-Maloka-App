@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const admin = readFileSync(new URL('../src/components/SimpleAdmin.tsx', import.meta.url), 'utf8');
+const service = readFileSync(new URL('../src/services/firestoreService.ts', import.meta.url), 'utf8');
+const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
+for (const tab of ['Accueil','Navigation','Cours','Agenda','Photos & Vidéos','Conditions & inscription','Footer','Configuration']) assert.match(admin, new RegExp(`'${tab.replace('&','\\&')}'`));
+for (const editor of ['HomeEditor','NavigationEditor','CourseEditor','EventEditor','PhotoEditor','VideoEditor','RegistrationEditor','TermsEditor','FooterEditor','ConfigurationEditor']) assert.match(admin, new RegExp(`function ${editor}`));
+for (const field of ['heroImageUrl','logoUrl','bannerButtonDestination','registrationButtonText','externalUrl','legalNotice','copyright']) assert.match(admin + service, new RegExp(field));
+assert.match(service, /doc\(db, 'pages', 'home'\)/); assert.match(service, /doc\(db, 'pages', 'footer'\)/);
+assert.match(rules, /match \/pages\/{pageId}/); assert.match(rules, /resource\.data\.published == true \|\| isAdmin\(\)/);
+console.log('CMS vérifié : 8 onglets, formulaires, documents pages et publication sécurisée.');

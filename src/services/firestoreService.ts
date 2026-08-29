@@ -1,8 +1,8 @@
-import { collection, deleteDoc, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, serverTimestamp, setDoc, where, writeBatch } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { DanceClass, DanceEvent, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
-import { DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from '../data';
+import { DanceClass, DanceEvent, FooterContent, HomePageContent, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from '../types';
+import { DEFAULT_FOOTER, DEFAULT_HOME_PAGE, DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from '../data';
 
 const sortByOrder = <T extends { order?: number }>(items: T[]) => [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 const withoutUndefined = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
@@ -28,10 +28,14 @@ export const subscribeRegistrationProcess = (callback: (item: RegistrationProces
 export const subscribeMembershipTerms = (callback: (item: MembershipTerms) => void) =>
   onSnapshot(doc(db, 'membership_terms', 'global'), (snapshot) => callback(snapshot.exists() ? snapshot.data() as MembershipTerms : DEFAULT_MEMBERSHIP_TERMS), () => callback(DEFAULT_MEMBERSHIP_TERMS));
 export const subscribeNavigation = (callback: (items: NavigationItem[]) => void) => onSnapshot(doc(db, 'navigation', 'main'), (snapshot) => callback(snapshot.exists() ? sortByOrder(snapshot.data().items as NavigationItem[]) : DEFAULT_NAVIGATION), () => callback(DEFAULT_NAVIGATION));
+export const subscribeHomePage = (callback: (value: HomePageContent) => void) => onSnapshot(doc(db, 'pages', 'home'), (snapshot) => callback(snapshot.exists() ? { ...DEFAULT_HOME_PAGE, ...snapshot.data() } as HomePageContent : DEFAULT_HOME_PAGE), () => callback({ ...DEFAULT_HOME_PAGE, published: false }));
+export const subscribeFooter = (callback: (value: FooterContent) => void) => onSnapshot(doc(db, 'pages', 'footer'), (snapshot) => callback(snapshot.exists() ? { ...DEFAULT_FOOTER, ...snapshot.data() } as FooterContent : DEFAULT_FOOTER), () => callback({ ...DEFAULT_FOOTER, published: false }));
 
 export const saveSiteSettingsToCloud = (item: SiteSettings) => setDoc(doc(db, 'site_settings', 'global'), withoutUndefined({ associationName: item.associationName, tagline: item.tagline, logoUrl: item.logoUrl ?? '', heroHeadline: item.heroHeadline, heroSubheadline: item.heroSubheadline, heroImage: item.heroImage ?? '', contactEmail: item.contactEmail, contactPhone: item.contactPhone, facebookUrl: item.facebookUrl ?? '', instagramUrl: item.instagramUrl ?? '', youtubeUrl: item.youtubeUrl ?? '', locationFontenay: item.locationFontenay, locationLaQueue: item.locationLaQueue, season: item.season ?? '', footerLegalText: item.footerLegalText ?? '', copyrightText: item.copyrightText ?? '', coursesPageTitle: item.coursesPageTitle ?? 'Nos cours', coursesPageSubtitle: item.coursesPageSubtitle ?? '', agendaPageTitle: item.agendaPageTitle ?? 'Agenda', agendaPageSubtitle: item.agendaPageSubtitle ?? '', galleryPageTitle: item.galleryPageTitle ?? 'Photos & Vidéos', galleryPageSubtitle: item.galleryPageSubtitle ?? '', bannerText: item.bannerText ?? item.registrationInfo.bannerText, bannerVisible: item.bannerVisible ?? item.moduleToggles.showRegistrationBanner, heroPrimaryButtonText: item.heroPrimaryButtonText ?? 'Planning, tarifs & cours 2026-2027', heroSecondaryButtonText: item.heroSecondaryButtonText ?? 'Dates & Agenda', updatedAt: serverTimestamp() }));
 export const saveNavigation = (items: NavigationItem[]) => setDoc(doc(db, 'navigation', 'main'), { items: sortByOrder(items) });
-export const saveCourse = (item: DanceClass) => setDoc(doc(db, 'courses', item.id), withoutUndefined({ id: item.id, name: item.name, description: item.description, category: item.category, level: item.level, instructor: item.instructor, schedule: item.schedule, location: item.location, image: item.image, season: item.season ?? '', priceMonthly: item.priceMonthly, annualPrice: item.annualPrice ?? 0, isFree: item.isFree ?? item.annualPrice === 0, helloAssoUrl: item.helloAssoUrl ?? '', active: item.active !== false, order: item.order ?? 0 }));
+export const saveHomePage = (value: HomePageContent) => setDoc(doc(db, 'pages', 'home'), value);
+export const saveFooter = (value: FooterContent) => setDoc(doc(db, 'pages', 'footer'), value);
+export const saveCourse = (item: DanceClass) => setDoc(doc(db, 'courses', item.id), withoutUndefined({ id: item.id, name: item.name, description: item.description, category: item.category, level: item.level, instructor: item.instructor, schedule: item.schedule, location: item.location, image: item.image, season: item.season ?? '', priceMonthly: item.priceMonthly, annualPrice: item.annualPrice ?? 0, isFree: item.isFree ?? item.annualPrice === 0, helloAssoUrl: item.helloAssoUrl ?? '', registrationButtonText: item.registrationButtonText ?? 'S’inscrire', active: item.active !== false, order: item.order ?? 0 }));
 export const deleteCourse = (id: string) => deleteDoc(doc(db, 'courses', id));
 export const saveEvent = (item: DanceEvent) => setDoc(doc(db, 'events', item.id), { id: item.id, title: item.title, type: item.type, date: item.date, time: item.time, location: item.location, description: item.description, price: item.price, image: item.image, externalUrl: item.externalUrl ?? '', active: item.active !== false, order: item.order ?? 0 });
 export const deleteEvent = (id: string) => deleteDoc(doc(db, 'events', id));
@@ -46,7 +50,7 @@ export async function initializeFirestoreContent() {
   const batch = writeBatch(db);
   const summary: string[] = [];
   const collections = [
-    { name: 'courses', items: DANCE_CLASSES.map((item, order) => ({ id: item.id, name: item.name, description: item.description, category: item.category, level: item.level, instructor: item.instructor, schedule: item.schedule, location: item.location, image: item.image, season: item.season ?? '', priceMonthly: item.priceMonthly, annualPrice: item.annualPrice ?? 0, isFree: item.annualPrice === 0, helloAssoUrl: item.helloAssoUrl ?? '', active: item.active !== false, order })) },
+    { name: 'courses', items: DANCE_CLASSES.map((item, order) => ({ id: item.id, name: item.name, description: item.description, category: item.category, level: item.level, instructor: item.instructor, schedule: item.schedule, location: item.location, image: item.image, season: item.season ?? '', priceMonthly: item.priceMonthly, annualPrice: item.annualPrice ?? 0, isFree: item.annualPrice === 0, helloAssoUrl: item.helloAssoUrl ?? '', registrationButtonText: item.registrationButtonText ?? 'S’inscrire', active: item.active !== false, order })) },
     { name: 'gallery', items: PHOTO_GALLERY.map((item, order) => ({ id: item.id, title: item.title, url: item.url, driveFileId: '', category: item.category, description: item.description, date: item.date ?? '', active: true, order })) },
     { name: 'videos', items: DEFAULT_VIDEOS.map((item, order) => ({ id: item.id, title: item.title, youtubeId: item.youtubeId, description: item.description, date: item.date, active: true, order })) },
     { name: 'events', items: DANCE_EVENTS.map((item, order) => ({ id: item.id, title: item.title, type: item.type, date: item.date, time: item.time, location: item.location, description: item.description, price: item.price, image: item.image, externalUrl: '', active: item.active !== false, order })) },
@@ -63,11 +67,14 @@ export async function initializeFirestoreContent() {
     { collectionName: 'registration_process', value: DEFAULT_REGISTRATION_PROCESS },
     { collectionName: 'membership_terms', value: DEFAULT_MEMBERSHIP_TERMS },
     { collectionName: 'navigation', value: { items: DEFAULT_NAVIGATION }, documentId: 'main' },
+    { collectionName: 'pages', value: DEFAULT_HOME_PAGE, documentId: 'home' },
+    { collectionName: 'pages', value: DEFAULT_FOOTER, documentId: 'footer' },
   ];
   for (const entry of documents) {
-    const snapshot = await getDocs(collection(db, entry.collectionName));
-    if (snapshot.empty) {
-      batch.set(doc(db, entry.collectionName, 'documentId' in entry ? entry.documentId : 'global'), withoutUndefined(entry.value));
+    const documentId = 'documentId' in entry ? entry.documentId : 'global';
+    const exists = 'documentId' in entry ? (await getDoc(doc(db, entry.collectionName, documentId))).exists() : !(await getDocs(collection(db, entry.collectionName))).empty;
+    if (!exists) {
+      batch.set(doc(db, entry.collectionName, documentId), withoutUndefined(entry.value));
       summary.push(`${entry.collectionName} initialisée`);
     } else summary.push(`${entry.collectionName} déjà initialisée (ignorée)`);
   }

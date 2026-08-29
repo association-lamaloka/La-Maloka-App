@@ -7,9 +7,9 @@ import { Footer } from './components/Footer';
 import { SimpleAdmin } from './components/SimpleAdmin';
 import { LandingContent } from './components/LandingContent';
 import { TropicalPatternBG } from './components/TropicalDecorations';
-import { DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
-import { DanceClass, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
-import { subscribeCourses, subscribeEvents, subscribeGallery, subscribeMembershipTerms, subscribeNavigation, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
+import { DEFAULT_FOOTER, DEFAULT_HOME_PAGE, DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
+import { DanceClass, FooterContent, HomePageContent, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
+import { subscribeCourses, subscribeFooter, subscribeHomePage, subscribeEvents, subscribeGallery, subscribeMembershipTerms, subscribeNavigation, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
 import { auth, authPersistenceReady } from './firebase';
 
 type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'conditions' | 'administration';
@@ -27,6 +27,8 @@ export default function App() {
   const [terms, setTerms] = useState<MembershipTerms>(DEFAULT_MEMBERSHIP_TERMS);
   const [navigation, setNavigation] = useState<NavigationItem[]>(DEFAULT_NAVIGATION);
   const [events, setEvents] = useState(DANCE_EVENTS);
+  const [homePage, setHomePage] = useState<HomePageContent>(DEFAULT_HOME_PAGE);
+  const [footerContent, setFooterContent] = useState<FooterContent>(DEFAULT_FOOTER);
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
@@ -83,6 +85,8 @@ export default function App() {
     const unsubscribeTerms = subscribeMembershipTerms(setTerms);
     const unsubscribeNavigation = subscribeNavigation(setNavigation);
     const unsubscribeEvents = subscribeEvents(setEvents);
+    const unsubscribeHome = subscribeHomePage(setHomePage);
+    const unsubscribeFooter = subscribeFooter(setFooterContent);
     return () => {
       unsubscribeSettings();
       unsubscribeGallery();
@@ -92,6 +96,8 @@ export default function App() {
       unsubscribeTerms();
       unsubscribeNavigation();
       unsubscribeEvents();
+      unsubscribeHome();
+      unsubscribeFooter();
     };
   }, []);
 
@@ -117,9 +123,10 @@ export default function App() {
       />
 
       <main>
-        {view === 'accueil' && (
+        {view === 'accueil' && homePage.published && (
           <Hero
             siteSettings={settings}
+            content={homePage}
             onExploreClasses={() => navigate('cours')}
             onViewCalendar={() => navigate('agenda')}
             onViewRegistrationDates={() => navigate('cours')}
@@ -130,11 +137,11 @@ export default function App() {
         {view === 'galerie' && <LandingContent section="galerie" pageTitle={settings.galleryPageTitle} pageSubtitle={settings.galleryPageSubtitle} photos={photos} videos={videos} />}
         {view === 'conditions' && <LandingContent section="conditions" terms={terms} onBack={() => navigate('cours')} />}
         {view === 'administration' && (
-          <SimpleAdmin settings={settings} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
+          <SimpleAdmin settings={settings} homePage={homePage} footerContent={footerContent} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
         )}
       </main>
 
-      <Footer setCurrentTab={navigate} siteSettings={settings} />
+      {footerContent.published && <Footer setCurrentTab={navigate} siteSettings={settings} content={footerContent} />}
     </div>
   );
 }

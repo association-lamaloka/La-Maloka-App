@@ -11,7 +11,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:auth-flow": "node scripts/check-auth-flow.mjs",
-    "test:media-security": "node scripts/check-media-security.mjs"
+    "test:media-security": "node scripts/check-media-security.mjs",
+    "test:cms-model": "node scripts/check-cms-model.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

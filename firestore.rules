@@ -42,7 +42,7 @@ service cloud.firestore {
     match /courses/{id} {
       allow read: if resource.data.active == true || isAdmin();
       allow create, update: if isAdmin() && noPassword()
-        && request.resource.data.keys().hasOnly(['id','name','description','category','level','instructor','schedule','location','image','season','priceMonthly','annualPrice','isFree','helloAssoUrl','active','order'])
+        && request.resource.data.keys().hasOnly(['id','name','description','category','level','instructor','schedule','location','image','season','priceMonthly','annualPrice','isFree','helloAssoUrl','registrationButtonText','active','order'])
         && request.resource.data.id == id
         && request.resource.data.name is string && request.resource.data.name.size() <= 180
         && request.resource.data.description is string && request.resource.data.description.size() <= 2000
@@ -56,6 +56,7 @@ service cloud.firestore {
         && request.resource.data.priceMonthly is number && request.resource.data.priceMonthly >= 0
         && request.resource.data.annualPrice is number && request.resource.data.annualPrice >= 0
         && request.resource.data.isFree is bool && request.resource.data.active is bool
+        && request.resource.data.registrationButtonText is string && request.resource.data.registrationButtonText.size() <= 80
         && optionalHttps('helloAssoUrl') && validOrder(request.resource.data.order);
       allow delete: if isAdmin();
     }
@@ -96,6 +97,40 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['items'])
         && request.resource.data.items is list && request.resource.data.items.size() <= 12;
       allow delete: if isAdmin();
+    }
+    match /pages/{pageId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && (
+          (pageId == 'home'
+            && request.resource.data.keys().hasOnly(['eyebrow','headline','highlight','description','heroImageUrl','logoUrl','overlayTitle','overlayText','overlayImageUrl','bannerText','bannerButtonText','bannerButtonDestination','primaryButtonText','primaryButtonDestination','secondaryButtonText','secondaryButtonDestination','locationBadgeOne','locationBadgeTwo','seasonBadge','sections','published'])
+            && request.resource.data.eyebrow is string && request.resource.data.eyebrow.size() <= 160
+            && request.resource.data.headline is string && request.resource.data.headline.size() <= 180
+            && request.resource.data.highlight is string && request.resource.data.highlight.size() <= 120
+            && request.resource.data.description is string && request.resource.data.description.size() <= 1200
+            && request.resource.data.heroImageUrl is string && request.resource.data.heroImageUrl.matches('https://.*')
+            && request.resource.data.logoUrl is string && (request.resource.data.logoUrl == '' || request.resource.data.logoUrl.matches('https://.*'))
+            && request.resource.data.overlayImageUrl is string && request.resource.data.overlayImageUrl.matches('https://.*')
+            && request.resource.data.bannerButtonDestination in ['cours','agenda']
+            && request.resource.data.primaryButtonDestination in ['cours','agenda']
+            && request.resource.data.secondaryButtonDestination in ['cours','agenda']
+            && request.resource.data.sections is list && request.resource.data.sections.size() <= 20
+            && request.resource.data.published is bool)
+          ||
+          (pageId == 'footer'
+            && request.resource.data.keys().hasOnly(['description','address','email','phone','facebookUrl','instagramUrl','youtubeUrl','links','legalNotice','copyright','blocks','published'])
+            && request.resource.data.description is string && request.resource.data.description.size() <= 1200
+            && request.resource.data.address is string && request.resource.data.address.size() <= 500
+            && request.resource.data.email is string && request.resource.data.email.size() <= 254
+            && request.resource.data.phone is string && request.resource.data.phone.size() <= 40
+            && optionalHttps('facebookUrl') && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl')
+            && request.resource.data.links is list && request.resource.data.links.size() <= 20
+            && request.resource.data.legalNotice is string && request.resource.data.legalNotice.size() <= 2000
+            && request.resource.data.copyright is string && request.resource.data.copyright.size() <= 300
+            && request.resource.data.blocks is list && request.resource.data.blocks.size() <= 12
+            && request.resource.data.published is bool)
+        );
+      allow delete: if isAdmin() && pageId in ['home','footer'];
     }
     match /videos/{id} {
       allow read: if resource.data.active == true || isAdmin();

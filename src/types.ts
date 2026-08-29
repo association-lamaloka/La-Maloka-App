@@ -41,6 +41,7 @@ export interface DanceClass {
   collectedAmount?: number; // Montant collecté en €
   daysRemaining?: number; // Nombre de jours restants
   helloAssoUrl?: string; // Lien direct HelloAsso
+  registrationButtonText?: string;
   lastHelloAssoSync?: string; // Horodatage de la dernière synchronisation
   trialDate?: string; // Pour les cours d'essai (ex: 11 septembre 2026)
   isTrialClass?: boolean;
@@ -115,6 +116,45 @@ export interface NavigationItem {
   destination: 'accueil' | 'cours' | 'agenda' | 'galerie';
   order: number;
   active: boolean;
+}
+
+export interface HomePageContent {
+  eyebrow: string;
+  headline: string;
+  highlight: string;
+  description: string;
+  heroImageUrl: string;
+  logoUrl: string;
+  overlayTitle: string;
+  overlayText: string;
+  overlayImageUrl: string;
+  bannerText: string;
+  bannerButtonText: string;
+  bannerButtonDestination: 'cours' | 'agenda';
+  primaryButtonText: string;
+  primaryButtonDestination: 'cours' | 'agenda';
+  secondaryButtonText: string;
+  secondaryButtonDestination: 'cours' | 'agenda';
+  locationBadgeOne: string;
+  locationBadgeTwo: string;
+  seasonBadge: string;
+  sections: Array<{ id: string; title: string; subtitle: string; order: number; visible: boolean }>;
+  published: boolean;
+}
+
+export interface FooterContent {
+  description: string;
+  address: string;
+  email: string;
+  phone: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  youtubeUrl: string;
+  links: Array<{ id: string; label: string; destination: 'cours' | 'agenda' | 'galerie' | 'conditions'; order: number; visible: boolean }>;
+  legalNotice: string;
+  copyright: string;
+  blocks: Array<{ id: string; label: string; order: number; visible: boolean }>;
+  published: boolean;
 }
 
 export interface HomepageVignette {
