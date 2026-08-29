@@ -27,6 +27,17 @@ Dans un terminal déjà autorisé avec GitHub CLI, le script suivant pousse la b
 
 Le script s'arrête sans modifier GitHub si `gh auth status` ne confirme pas une session valide. Après son exécution, vérifier que GitHub affiche la branche `work` et la pull request avant d'attendre une Preview Vercel.
 
+### Depuis une pull request déjà ouverte
+
+1. Cliquer sur le titre de la pull request dans GitHub.
+2. Ouvrir l'onglet **Checks** ou descendre jusqu'à la zone des contrôles en bas de **Conversation**.
+3. Attendre que le contrôle Vercel affiche **Success**. Cliquer sur **Details** pour ouvrir directement la maquette.
+4. Si aucun contrôle Vercel n'apparaît après quelques minutes, ouvrir Vercel → **Deployments**, retirer le filtre **Production**, sélectionner **Preview** et chercher la branche de la pull request.
+5. Si la Preview est en erreur, ouvrir le déploiement puis **Build Logs** ; ne pas fusionner la pull request.
+6. Si la Preview est prête, utiliser **Visit** et partager son URL `*.vercel.app`. Tester la maquette avant toute fusion vers `principal`.
+
+Le bouton GitHub **Merge pull request** publiera ensuite les changements sur `principal` et déclenchera le déploiement Production ; ne l'utiliser qu'après validation de la Preview et sécurisation de Firebase.
+
 ## Visualiser la maquette en local
 
 ### Prérequis
