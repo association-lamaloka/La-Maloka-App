@@ -22,7 +22,11 @@ export function LandingContent({ section, classes = [], events = [], photos = []
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">{item.description}</p>
                 <p className="flex items-center gap-2 text-sm"><Clock size={16} /> {item.schedule}</p>
                 <p className="flex items-center gap-2 text-sm"><MapPin size={16} /> {item.location}</p>
-                {item.helloAssoUrl && <a href={item.helloAssoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-bold text-rose-600">Informations HelloAsso <ExternalLink size={15} /></a>}
+                <div className="rounded-2xl bg-lime-50 p-4 dark:bg-lime-950/30">
+                  <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tarif saison</p>
+                  <p className="mt-1 text-2xl font-black text-[#557219] dark:text-lime-400">{item.annualPrice === 0 ? 'Gratuit' : `${item.annualPrice} €`}</p>
+                </div>
+                {item.helloAssoUrl && <a href={item.helloAssoUrl} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 font-bold text-white shadow-md transition-colors hover:bg-rose-700">S’inscrire <ExternalLink size={16} /></a>}
               </div>
             </article>
           ))}

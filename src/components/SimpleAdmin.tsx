@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { LogIn, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { auth } from '../firebase';
 import { PhotoItem, SiteSettings } from '../types';
@@ -9,8 +9,6 @@ interface Props { settings: SiteSettings; photos: PhotoItem[] }
 
 export function SimpleAdmin({ settings, photos }: Props) {
   const [user, setUser] = useState<User | null>(auth.currentUser);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [form, setForm] = useState(settings);
@@ -19,14 +17,14 @@ export function SimpleAdmin({ settings, photos }: Props) {
   useEffect(() => onAuthStateChanged(auth, setUser), []);
   useEffect(() => setForm(settings), [settings]);
 
-  const login = async (event: FormEvent) => {
-    event.preventDefault();
+  const login = async () => {
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      setPassword('');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ login_hint: 'association.lamaloka@gmail.com' });
+      await signInWithPopup(auth, provider);
     } catch {
-      setError('Connexion impossible. Vérifiez vos identifiants ou contactez la personne responsable du site.');
+      setError('La connexion avec Google a échoué. Réessayez avec le compte association.lamaloka@gmail.com ou contactez la personne responsable du site.');
     }
   };
 
@@ -50,13 +48,11 @@ export function SimpleAdmin({ settings, photos }: Props) {
 
   if (!user) return (
     <section className="mx-auto flex min-h-[65vh] max-w-md items-center px-4 py-16">
-      <form onSubmit={login} className="w-full space-y-5 rounded-3xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-        <ShieldCheck className="text-emerald-500" size={36} /><div><h1 className="text-2xl font-black">Accès équipe</h1><p className="mt-2 text-sm text-zinc-500">Utilisez votre compte individuel fourni par l'association.</p></div>
-        <label className="block text-sm font-semibold">Adresse email<input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 w-full rounded-xl border border-zinc-300 bg-transparent p-3 dark:border-zinc-700" /></label>
-        <label className="block text-sm font-semibold">Mot de passe<input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-zinc-300 bg-transparent p-3 dark:border-zinc-700" /></label>
+      <div className="w-full space-y-5 rounded-3xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+        <ShieldCheck className="text-emerald-500" size={36} /><div><h1 className="text-2xl font-black">Accès équipe</h1><p className="mt-2 text-sm text-zinc-500">Connectez-vous avec le compte Google de l'association.</p></div>
         {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
-        <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter</button>
-      </form>
+        <button type="button" onClick={login} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 p-3 font-bold text-white dark:bg-white dark:text-zinc-900"><LogIn size={17} /> Se connecter avec Google</button>
+      </div>
     </section>
   );
 

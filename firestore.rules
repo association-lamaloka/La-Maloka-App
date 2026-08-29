@@ -3,15 +3,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAssociationTeam() {
       return request.auth != null
-        && request.auth.token.associationTeam == true;
+        && request.auth.token.email == 'association.lamaloka@gmail.com'
+        && request.auth.token.email_verified == true;
     }
 
-    // Public landing-page content. Editing additionally requires the
-    // `associationTeam` custom claim, issued only through the Firebase Admin SDK.
+    // Public landing-page content. Editing is reserved for the association's
+    // verified Google account.
     match /site_settings/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAssociationTeam()
+      allow create, update: if isAssociationTeam()
         && !request.resource.data.keys().hasAny(['adminPassword']);
+      allow delete: if isAssociationTeam();
     }
 
     match /gallery/{photoId} {
