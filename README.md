@@ -6,7 +6,7 @@ Site public informatif de l'association La Maloka, avec un espace d'édition ré
 
 Oui. La solution recommandée est une **Preview Vercel** : la compilation se fait dans le cloud et la maquette s'ouvre avec un simple lien web, sur ordinateur ou téléphone.
 
-1. Ouvrir le projet `associationlamaloka-lab/La-Maloka-App` dans Vercel.
+1. Ouvrir le projet `association-lamaloka/La-Maloka-App` dans Vercel.
 2. Si le projet est déjà connecté à GitHub, ouvrir **Deployments** et sélectionner le déploiement associé à la branche ou à la pull request. Vercel affiche un bouton **Visit** et une URL `*.vercel.app`.
 3. Si le projet n'est pas encore connecté, choisir **Add New → Project**, importer le dépôt GitHub, conserver le preset **Vite**, puis cliquer sur **Deploy**.
 4. Partager l'URL de preview avec l'équipe. Cette URL ne remplace pas `lamaloka.fr` et permet de valider la maquette sans toucher à la production.
@@ -19,10 +19,10 @@ Il n'est pas nécessaire d'installer Node.js, npm, Firebase CLI ou le dépôt po
 
 Un commit créé dans un environnement de travail distant n'est pas automatiquement présent sur GitHub. Il faut que cet environnement dispose à la fois d'un accès réseau à GitHub et d'une session autorisée, puis pousser la branche. La préparation d'un titre de pull request, à elle seule, ne publie aucun code.
 
-Dans un terminal déjà autorisé avec GitHub CLI, le script suivant pousse la branche et crée la pull request vers `principal` :
+Dans un terminal déjà autorisé avec GitHub CLI, le script suivant pousse la branche et crée la pull request vers `main` :
 
 ```bash
-./scripts/publish-github-branch.sh work principal
+./scripts/publish-github-branch.sh work main
 ```
 
 Le script s'arrête sans modifier GitHub si `gh auth status` ne confirme pas une session valide. Après son exécution, vérifier que GitHub affiche la branche `work` et la pull request avant d'attendre une Preview Vercel.
@@ -34,9 +34,23 @@ Le script s'arrête sans modifier GitHub si `gh auth status` ne confirme pas une
 3. Attendre que le contrôle Vercel affiche **Success**. Cliquer sur **Details** pour ouvrir directement la maquette.
 4. Si aucun contrôle Vercel n'apparaît après quelques minutes, ouvrir Vercel → **Deployments**, retirer le filtre **Production**, sélectionner **Preview** et chercher la branche de la pull request.
 5. Si la Preview est en erreur, ouvrir le déploiement puis **Build Logs** ; ne pas fusionner la pull request.
-6. Si la Preview est prête, utiliser **Visit** et partager son URL `*.vercel.app`. Tester la maquette avant toute fusion vers `principal`.
+6. Si la Preview est prête, utiliser **Visit** et partager son URL `*.vercel.app`. Tester la maquette avant toute fusion vers `main`.
 
-Le bouton GitHub **Merge pull request** publiera ensuite les changements sur `principal` et déclenchera le déploiement Production ; ne l'utiliser qu'après validation de la Preview et sécurisation de Firebase.
+Le bouton GitHub **Merge pull request** publiera ensuite les changements sur `main` et déclenchera le déploiement Production ; ne l'utiliser qu'après validation de la Preview et sécurisation de Firebase.
+
+#### Message « This branch has not been deployed »
+
+Ce message signifie que GitHub connaît la branche, mais que Vercel n'a créé aucun déploiement pour elle. Il ne faut pas fusionner uniquement pour essayer de débloquer la Preview.
+
+Dans Vercel, ouvrir le projet puis **Settings → Git** et vérifier :
+
+1. **Connected Git Repository** doit être exactement `association-lamaloka/La-Maloka-App` ;
+2. **Production Branch** doit être `main` ;
+3. les déploiements de branches et pull requests ne doivent pas être désactivés par un **Ignored Build Step** ;
+4. dans **Settings → Security / Git**, l'application Vercel doit avoir accès à l'organisation `association-lamaloka` et à ce dépôt ;
+5. après correction, ouvrir **Deployments → Create Deployment**, choisir la branche `codex/effectuer-une-audit-extensif-du-site` et lancer un déploiement Preview.
+
+Si Vercel est encore connecté à un ancien dépôt ou à une branche `principal`, le déconnecter puis importer le dépôt exact ci-dessus. Cette opération ne modifie pas le domaine de production tant que la Preview n'est pas promue et que la pull request n'est pas fusionnée.
 
 ## Visualiser la maquette en local
 
@@ -81,7 +95,7 @@ Les opérations Firebase détaillées et les vérifications de confidentialité 
 ## Preview Vercel depuis GitHub
 
 1. Pousser la branche sur GitHub.
-2. Dans Vercel, choisir **Add New → Project** puis importer `associationlamaloka-lab/La-Maloka-App`.
+2. Dans Vercel, choisir **Add New → Project** puis importer `association-lamaloka/La-Maloka-App`.
 3. Vérifier les valeurs détectées :
    - Framework Preset : **Vite** ;
    - Build Command : `npm run build` ;

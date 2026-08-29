@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPOSITORY="associationlamaloka-lab/La-Maloka-App"
+REPOSITORY="association-lamaloka/La-Maloka-App"
 BRANCH="${1:-work}"
-BASE_BRANCH="${2:-principal}"
+BASE_BRANCH="${2:-main}"
 
 if ! command -v gh >/dev/null 2>&1; then
   echo "Erreur: GitHub CLI (gh) n'est pas installé." >&2
