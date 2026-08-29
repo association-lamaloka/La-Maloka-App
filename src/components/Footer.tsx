@@ -197,7 +197,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
             <div className="pt-2 border-t border-zinc-900">
               <button
                 onClick={() => {
-                  setCurrentTab('backoffice');
+                  setCurrentTab('administration');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="text-[11px] text-zinc-500 hover:text-rose-400 transition-colors flex items-center gap-1 cursor-pointer"

@@ -3,89 +3,31 @@
   "entities": {
     "site_settings": {
       "title": "SiteSettings",
-      "description": "Global website content, texts, logos, contact info and admin credentials",
+      "description": "Public landing-page content without credentials or member data",
       "properties": {
-        "siteName": { "type": "string" },
-        "heroTitle": { "type": "string" },
-        "heroSubtitle": { "type": "string" },
+        "associationName": { "type": "string" },
+        "heroHeadline": { "type": "string" },
+        "heroSubheadline": { "type": "string" },
         "contactEmail": { "type": "string" },
-        "contactPhone": { "type": "string" },
-        "adminPassword": { "type": "string" },
-        "updatedAt": { "type": "string" }
+        "contactPhone": { "type": "string" }
       }
     },
-    "classes": {
-      "title": "DanceClass",
-      "description": "Available dance disciplines, instructors, schedules, rooms and capacities",
+    "gallery": {
+      "title": "GalleryPhoto",
+      "description": "Public association photo metadata",
       "properties": {
-        "name": { "type": "string" },
-        "style": { "type": "string" },
-        "day": { "type": "string" },
-        "time": { "type": "string" },
-        "duration": { "type": "string" },
-        "level": { "type": "string" },
-        "location": { "type": "string" },
-        "roomName": { "type": "string" },
-        "capacity": { "type": "number" },
-        "enrolledCount": { "type": "number" },
-        "instructor": { "type": "string" },
-        "priceMonthly": { "type": "number" },
-        "annualPrice": { "type": "number" },
-        "description": { "type": "string" }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" }
       },
-      "required": ["name", "style", "day", "time", "location", "capacity"]
-    },
-    "inscriptions": {
-      "title": "Inscription",
-      "description": "Member registrations for classes and waitlists",
-      "properties": {
-        "classId": { "type": "string" },
-        "className": { "type": "string" },
-        "userName": { "type": "string" },
-        "userEmail": { "type": "string" },
-        "userPhone": { "type": "string" },
-        "level": { "type": "string" },
-        "status": { "type": "string" },
-        "date": { "type": "string" },
-        "paymentStatus": { "type": "string" },
-        "paymentMethod": { "type": "string" },
-        "amount": { "type": "number" },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["classId", "className", "userName", "userEmail", "status"]
-    },
-    "health_forms": {
-      "title": "HealthForm",
-      "description": "Medical questionnaire QS-Sport responses and electronic signatures",
-      "properties": {
-        "userName": { "type": "string" },
-        "userEmail": { "type": "string" },
-        "userPhone": { "type": "string" },
-        "hasMedicalCertificate": { "type": "boolean" },
-        "allNoAnswers": { "type": "boolean" },
-        "signatureDataUrl": { "type": "string" },
-        "signatureDate": { "type": "string" },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["userName", "userEmail", "signatureDate"]
+      "required": ["id", "title", "url"]
     }
   },
   "firestore": {
-    "/site_settings/{docId}": {
-      "schema": "#/entities/site_settings",
-      "description": "Site-wide general configuration"
-    },
-    "/classes/{classId}": {
-      "schema": "#/entities/classes",
-      "description": "Dance classes catalogue"
-    },
-    "/inscriptions/{inscriptionId}": {
-      "schema": "#/entities/inscriptions",
-      "description": "Member registrations"
-    },
-    "/health_forms/{formId}": {
-      "schema": "#/entities/health_forms",
-      "description": "Medical forms and signatures"
-    }
+    "/site_settings/{docId}": { "schema": "#/entities/site_settings" },
+    "/gallery/{photoId}": { "schema": "#/entities/gallery" }
   }
 }

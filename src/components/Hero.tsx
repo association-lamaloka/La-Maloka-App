@@ -131,9 +131,7 @@ export const Hero: React.FC<HeroProps> = ({
                 className="px-8 py-4 bg-gradient-to-r from-orange-500 via-rose-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 <span>
-                  {siteSettings.moduleToggles?.allowOnlineRegistrations
-                    ? 'Découvrir les Cours & Inscriptions'
-                    : 'Planning, Tarifs & Cours 2026-2027'}
+                  Planning, tarifs & cours 2026-2027
                 </span>
                 <ArrowRight size={18} />
               </button>
@@ -360,11 +358,11 @@ export const Hero: React.FC<HeroProps> = ({
               </div>
 
               <h3 className="text-2xl sm:text-3xl font-black">
-                Dates Clés & Inscriptions
+                Dates clés & informations
               </h3>
 
               <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">
-                Les inscriptions s'effectuent prioritairement lors des Forums des Associations au début du mois de septembre, ainsi qu'en ligne via notre fiche de pré-inscription.
+                Retrouvez-nous lors des Forums des Associations au début du mois de septembre. Pour rejoindre un cours, contactez directement l'équipe de La Maloka.
               </p>
 
               {/* List of Important Dates */}
@@ -390,7 +388,7 @@ export const Hero: React.FC<HeroProps> = ({
                   onClick={() => onExploreClasses()}
                   className="px-6 py-3 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg"
                 >
-                  Faire une Pré-Inscription
+                  Découvrir les cours
                 </button>
                 <button
                   id="home-dates-agenda-btn"
