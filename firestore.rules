@@ -13,15 +13,34 @@ service cloud.firestore {
     match /site_settings/{id} {
       allow read: if true;
       allow create, update: if isAdmin() && noPassword()
-        && request.resource.data.keys().hasOnly(['heroHeadline', 'heroSubheadline', 'contactEmail', 'contactPhone', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['associationName','tagline','logoUrl','heroHeadline','heroSubheadline','heroImage','contactEmail','contactPhone','facebookUrl','instagramUrl','youtubeUrl','locationFontenay','locationLaQueue','season','footerLegalText','copyrightText','coursesPageTitle','coursesPageSubtitle','agendaPageTitle','agendaPageSubtitle','galleryPageTitle','galleryPageSubtitle','bannerText','bannerVisible','heroPrimaryButtonText','heroSecondaryButtonText','updatedAt'])
+        && request.resource.data.associationName is string && request.resource.data.associationName.size() <= 120
+        && request.resource.data.tagline is string && request.resource.data.tagline.size() <= 200
         && request.resource.data.heroHeadline is string && request.resource.data.heroHeadline.size() <= 160
         && request.resource.data.heroSubheadline is string && request.resource.data.heroSubheadline.size() <= 300
         && request.resource.data.contactEmail is string && request.resource.data.contactEmail.size() <= 254
-        && request.resource.data.contactPhone is string && request.resource.data.contactPhone.size() <= 40;
+        && request.resource.data.contactPhone is string && request.resource.data.contactPhone.size() <= 40
+        && request.resource.data.locationFontenay is string && request.resource.data.locationFontenay.size() <= 300
+        && request.resource.data.locationLaQueue is string && request.resource.data.locationLaQueue.size() <= 300
+        && request.resource.data.season is string && request.resource.data.season.size() <= 80
+        && request.resource.data.footerLegalText is string && request.resource.data.footerLegalText.size() <= 1000
+        && request.resource.data.copyrightText is string && request.resource.data.copyrightText.size() <= 300
+        && request.resource.data.coursesPageTitle is string && request.resource.data.coursesPageTitle.size() <= 120
+        && request.resource.data.coursesPageSubtitle is string && request.resource.data.coursesPageSubtitle.size() <= 300
+        && request.resource.data.agendaPageTitle is string && request.resource.data.agendaPageTitle.size() <= 120
+        && request.resource.data.agendaPageSubtitle is string && request.resource.data.agendaPageSubtitle.size() <= 300
+        && request.resource.data.galleryPageTitle is string && request.resource.data.galleryPageTitle.size() <= 120
+        && request.resource.data.galleryPageSubtitle is string && request.resource.data.galleryPageSubtitle.size() <= 300
+        && request.resource.data.bannerText is string && request.resource.data.bannerText.size() <= 300
+        && request.resource.data.bannerVisible is bool
+        && request.resource.data.heroPrimaryButtonText is string && request.resource.data.heroPrimaryButtonText.size() <= 100
+        && request.resource.data.heroSecondaryButtonText is string && request.resource.data.heroSecondaryButtonText.size() <= 100
+        && optionalHttps('logoUrl') && optionalHttps('heroImage') && optionalHttps('facebookUrl')
+        && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl');
       allow delete: if isAdmin();
     }
     match /courses/{id} {
-      allow read: if true;
+      allow read: if resource.data.active == true || isAdmin();
       allow create, update: if isAdmin() && noPassword()
         && request.resource.data.keys().hasOnly(['id','name','description','category','level','instructor','schedule','location','image','season','priceMonthly','annualPrice','isFree','helloAssoUrl','active','order'])
         && request.resource.data.id == id
@@ -41,19 +60,45 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /gallery/{id} {
-      allow read: if true;
+      allow read: if resource.data.active == true || isAdmin();
       allow create, update: if isAdmin() && noPassword()
-        && request.resource.data.keys().hasOnly(['id','title','url','description','date','active','order'])
+        && request.resource.data.keys().hasOnly(['id','title','url','driveFileId','category','description','date','active','order'])
         && request.resource.data.id == id
         && request.resource.data.title is string && request.resource.data.title.size() <= 120
         && request.resource.data.url is string && request.resource.data.url.matches('https://.*')
+        && request.resource.data.driveFileId is string && (request.resource.data.driveFileId == '' || request.resource.data.driveFileId.matches('^[A-Za-z0-9_-]{20,100}$'))
+        && request.resource.data.category is string && request.resource.data.category.size() <= 80
         && request.resource.data.description is string && request.resource.data.description.size() <= 1000
         && request.resource.data.date is string && request.resource.data.date.size() <= 20
         && request.resource.data.active is bool && validOrder(request.resource.data.order);
       allow delete: if isAdmin();
     }
-    match /videos/{id} {
+    match /events/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','type','date','time','location','description','price','image','externalUrl','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 180
+        && request.resource.data.type is string && request.resource.data.type.size() <= 80
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.time is string && request.resource.data.time.size() <= 80
+        && request.resource.data.location is string && request.resource.data.location.size() <= 200
+        && request.resource.data.description is string && request.resource.data.description.size() <= 2000
+        && request.resource.data.price is number && request.resource.data.price >= 0
+        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && optionalHttps('externalUrl') && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /navigation/{id} {
       allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && id == 'main'
+        && request.resource.data.keys().hasOnly(['items'])
+        && request.resource.data.items is list && request.resource.data.items.size() <= 12;
+      allow delete: if isAdmin();
+    }
+    match /videos/{id} {
+      allow read: if resource.data.active == true || isAdmin();
       allow create, update: if isAdmin() && noPassword()
         && request.resource.data.keys().hasOnly(['id','title','youtubeId','description','date','active','order'])
         && request.resource.data.id == id

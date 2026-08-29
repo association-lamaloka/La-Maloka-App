@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:auth-flow": "node scripts/check-auth-flow.mjs"
+    "test:auth-flow": "node scripts/check-auth-flow.mjs",
+    "test:media-security": "node scripts/check-media-security.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

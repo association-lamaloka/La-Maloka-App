@@ -7,9 +7,9 @@ import { Footer } from './components/Footer';
 import { SimpleAdmin } from './components/SimpleAdmin';
 import { LandingContent } from './components/LandingContent';
 import { TropicalPatternBG } from './components/TropicalDecorations';
-import { DEFAULT_MEMBERSHIP_TERMS, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
-import { DanceClass, MembershipTerms, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
-import { subscribeCourses, subscribeGallery, subscribeMembershipTerms, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
+import { DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
+import { DanceClass, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
+import { subscribeCourses, subscribeEvents, subscribeGallery, subscribeMembershipTerms, subscribeNavigation, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
 import { auth, authPersistenceReady } from './firebase';
 
 type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'conditions' | 'administration';
@@ -25,6 +25,8 @@ export default function App() {
   const [videos, setVideos] = useState<VideoItem[]>(DEFAULT_VIDEOS);
   const [registration, setRegistration] = useState<RegistrationProcess>(DEFAULT_REGISTRATION_PROCESS);
   const [terms, setTerms] = useState<MembershipTerms>(DEFAULT_MEMBERSHIP_TERMS);
+  const [navigation, setNavigation] = useState<NavigationItem[]>(DEFAULT_NAVIGATION);
+  const [events, setEvents] = useState(DANCE_EVENTS);
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
@@ -79,6 +81,8 @@ export default function App() {
     const unsubscribeVideos = subscribeVideos(setVideos);
     const unsubscribeRegistration = subscribeRegistrationProcess(setRegistration);
     const unsubscribeTerms = subscribeMembershipTerms(setTerms);
+    const unsubscribeNavigation = subscribeNavigation(setNavigation);
+    const unsubscribeEvents = subscribeEvents(setEvents);
     return () => {
       unsubscribeSettings();
       unsubscribeGallery();
@@ -86,6 +90,8 @@ export default function App() {
       unsubscribeVideos();
       unsubscribeRegistration();
       unsubscribeTerms();
+      unsubscribeNavigation();
+      unsubscribeEvents();
     };
   }, []);
 
@@ -106,6 +112,8 @@ export default function App() {
         setCurrentTab={navigate}
         isDarkMode={darkMode}
         toggleDarkMode={() => setDarkMode((current) => !current)}
+        items={navigation}
+        logoUrl={settings.logoUrl}
       />
 
       <main>
@@ -117,12 +125,12 @@ export default function App() {
             onViewRegistrationDates={() => navigate('cours')}
           />
         )}
-        {view === 'cours' && <LandingContent section="cours" classes={courses} registration={registration} terms={terms} onShowTerms={() => navigate('conditions')} />}
-        {view === 'agenda' && <LandingContent section="agenda" events={DANCE_EVENTS} />}
-        {view === 'galerie' && <LandingContent section="galerie" photos={photos} videos={videos} />}
+        {view === 'cours' && <LandingContent section="cours" pageTitle={settings.coursesPageTitle} pageSubtitle={settings.coursesPageSubtitle} classes={courses} registration={registration} terms={terms} onShowTerms={() => navigate('conditions')} />}
+        {view === 'agenda' && <LandingContent section="agenda" pageTitle={settings.agendaPageTitle} pageSubtitle={settings.agendaPageSubtitle} events={events} />}
+        {view === 'galerie' && <LandingContent section="galerie" pageTitle={settings.galleryPageTitle} pageSubtitle={settings.galleryPageSubtitle} photos={photos} videos={videos} />}
         {view === 'conditions' && <LandingContent section="conditions" terms={terms} onBack={() => navigate('cours')} />}
         {view === 'administration' && (
-          <SimpleAdmin settings={settings} courses={courses} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
+          <SimpleAdmin settings={settings} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
         )}
       </main>
 

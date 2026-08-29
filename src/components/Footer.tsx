@@ -40,7 +40,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-white">
               <div className="w-14 h-12 rounded-xl bg-[#95B208] p-1 shadow-md shadow-lime-900/30 flex items-center justify-center shrink-0 overflow-hidden border border-lime-400/40">
-                <LaMalokaOfficialLogoSVG showText={false} className="w-full h-full object-contain" />
+                {siteSettings?.logoUrl ? <img src={siteSettings.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="w-full h-full object-contain" />}
               </div>
               <div>
                 <span className="font-sans font-black text-lg tracking-tight bg-gradient-to-r from-lime-400 via-emerald-400 to-rose-400 bg-clip-text text-transparent uppercase block">
@@ -213,7 +213,8 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings }) =
 
         {/* Legal copyrights bar */}
         <div className="pt-8 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-600 font-light gap-4 text-center sm:text-left">
-          <p>© 2026 Association La Maloka. Salsa Cubaine & Cardio Latino dans les Yvelines.</p>
+          <p>{siteSettings?.copyrightText || '© 2026 Association La Maloka. Salsa Cubaine & Cardio Latino dans les Yvelines.'}</p>
+          {siteSettings?.footerLegalText && <p className="max-w-xl text-[10px]">{siteSettings.footerLegalText}</p>}
           <div className="flex gap-4">
             <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500">Fontenay-le-Fleury & La Queue-les-Yvelines</span>
           </div>

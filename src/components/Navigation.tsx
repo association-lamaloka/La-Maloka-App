@@ -7,16 +7,17 @@ interface NavigationProps {
   setCurrentTab: (tab: string) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  items?: Array<{ id: string; label: string; destination: string; order: number; active: boolean }>;
+  logoUrl?: string;
 }
-
-const items = [
+const defaultItems = [
   { id: 'accueil', label: 'Accueil' },
   { id: 'cours', label: 'Cours' },
   { id: 'agenda', label: 'Agenda' },
   { id: 'galerie', label: 'Photos & Vidéos' },
 ];
 
-export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMode }: NavigationProps) {
+export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMode, items = defaultItems.map((item, order) => ({ ...item, destination: item.id, order, active: true })), logoUrl }: NavigationProps) {
   const [open, setOpen] = useState(false);
 
   const navigate = (tab: string) => {
@@ -29,7 +30,7 @@ export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMo
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
         <button onClick={() => navigate('accueil')} className="flex items-center gap-3 text-left" aria-label="Accueil La Maloka">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#95B208] p-1 shadow-md">
-            <LaMalokaOfficialLogoSVG showText={false} className="h-full w-full" />
+            {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="h-full w-full" />}
           </span>
           <span>
             <strong className="block text-xl font-black text-[#557219] dark:text-lime-400">LA MALOKA</strong>
@@ -38,8 +39,8 @@ export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMo
         </button>
 
         <div className="hidden items-center gap-1 md:flex">
-          {items.map((item) => (
-            <button key={item.id} onClick={() => navigate(item.id)} className={`rounded-xl px-4 py-2 text-sm font-semibold ${currentTab === item.id ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300' : 'text-zinc-600 dark:text-zinc-300'}`}>
+          {items.filter((item) => item.active).sort((a,b) => a.order-b.order).map((item) => (
+            <button key={item.id} onClick={() => navigate(item.destination)} className={`rounded-xl px-4 py-2 text-sm font-semibold ${currentTab === item.destination ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300' : 'text-zinc-600 dark:text-zinc-300'}`}>
               {item.label}
             </button>
           ))}
@@ -58,8 +59,8 @@ export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMo
 
       {open && (
         <div className="space-y-2 border-t bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 md:hidden">
-          {[...items, { id: 'administration', label: 'Accès équipe' }].map((item) => (
-            <button key={item.id} onClick={() => navigate(item.id)} className="block w-full rounded-xl px-4 py-3 text-left font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          {[...items.filter((item) => item.active).sort((a,b) => a.order-b.order), { id: 'administration', label: 'Accès équipe', destination: 'administration', order: 999, active: true }].map((item) => (
+            <button key={item.id} onClick={() => navigate(item.destination)} className="block w-full rounded-xl px-4 py-3 text-left font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-800">
               {item.label}
             </button>
           ))}

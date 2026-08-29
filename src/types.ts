@@ -60,6 +60,8 @@ export interface DanceEvent {
   totalSpots: number;
   image: string;
   active?: boolean;
+  order?: number;
+  externalUrl?: string;
 }
 
 export interface PhotoItem {
@@ -72,6 +74,7 @@ export interface PhotoItem {
   likes?: number;
   active?: boolean;
   order?: number;
+  driveFileId?: string;
 }
 
 export interface VideoItem {
@@ -104,6 +107,14 @@ export interface MembershipTerms {
   lastUpdated: string;
   sections: Array<{ id: string; title: string; content: string; order: number }>;
   visible: boolean;
+}
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  destination: 'accueil' | 'cours' | 'agenda' | 'galerie';
+  order: number;
+  active: boolean;
 }
 
 export interface HomepageVignette {
@@ -184,6 +195,7 @@ export interface RegistrationInfo {
 export interface SiteSettings {
   associationName: string;
   tagline: string;
+  logoUrl?: string;
   heroHeadline: string;
   heroSubheadline: string;
   heroImage?: string;
@@ -199,6 +211,19 @@ export interface SiteSettings {
   facebookUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  season?: string;
+  footerLegalText?: string;
+  copyrightText?: string;
+  coursesPageTitle?: string;
+  coursesPageSubtitle?: string;
+  agendaPageTitle?: string;
+  agendaPageSubtitle?: string;
+  galleryPageTitle?: string;
+  galleryPageSubtitle?: string;
+  bannerText?: string;
+  bannerVisible?: boolean;
+  heroPrimaryButtonText?: string;
+  heroSecondaryButtonText?: string;
   vignettes: HomepageVignette[];
   registrationInfo: RegistrationInfo;
   pricingPlans?: PricingPlan[];

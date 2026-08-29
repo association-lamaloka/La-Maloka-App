@@ -1,4 +1,4 @@
-import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData, MembershipTerms, RegistrationProcess } from './types';
+import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData, MembershipTerms, NavigationItem, RegistrationProcess } from './types';
 
 export const GENERATED_HERO_IMAGE = 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1200';
 export const GENERATED_MOTION_IMAGE = 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=1200';
@@ -536,6 +536,13 @@ export const DEFAULT_MEMBERSHIP_TERMS: MembershipTerms = {
   sections: DEFAULT_GENERAL_CONDITIONS.sections.map((section, order) => ({ ...section, order })),
   visible: true,
 };
+
+export const DEFAULT_NAVIGATION: NavigationItem[] = [
+  { id: 'nav-home', label: 'Accueil', destination: 'accueil', order: 0, active: true },
+  { id: 'nav-courses', label: 'Cours', destination: 'cours', order: 1, active: true },
+  { id: 'nav-agenda', label: 'Agenda', destination: 'agenda', order: 2, active: true },
+  { id: 'nav-gallery', label: 'Photos & Vidéos', destination: 'galerie', order: 3, active: true },
+];
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   associationName: 'La Maloka',

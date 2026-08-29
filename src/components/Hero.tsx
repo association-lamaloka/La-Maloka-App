@@ -37,12 +37,12 @@ export const Hero: React.FC<HeroProps> = ({
       <FloatingParrot delay={2} className="absolute top-16 right-1/4 text-rose-500/5 w-28 h-28 hidden md:block" />
 
       {/* Top Registration Notification Banner (if active) */}
-      {moduleToggles.showRegistrationBanner && registrationInfo.bannerText && (
+      {(siteSettings.bannerVisible ?? moduleToggles.showRegistrationBanner) && (siteSettings.bannerText || registrationInfo.bannerText) && (
         <div className="bg-gradient-to-r from-orange-500 via-rose-500 to-emerald-600 text-white text-xs sm:text-sm font-medium py-3 px-4 shadow-sm relative z-20">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="shrink-0 animate-bounce" />
-              <span>{registrationInfo.bannerText}</span>
+              <span>{siteSettings.bannerText || registrationInfo.bannerText}</span>
             </div>
             <button
               id="hero-banner-dates-btn"
@@ -131,7 +131,7 @@ export const Hero: React.FC<HeroProps> = ({
                 className="px-8 py-4 bg-gradient-to-r from-orange-500 via-rose-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 <span>
-                  Planning, tarifs & cours 2026-2027
+                  {siteSettings.heroPrimaryButtonText || 'Planning, tarifs & cours 2026-2027'}
                 </span>
                 <ArrowRight size={18} />
               </button>
@@ -141,7 +141,7 @@ export const Hero: React.FC<HeroProps> = ({
                 className="px-7 py-4 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all duration-200 border border-emerald-200 dark:border-emerald-900/50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 <Calendar size={18} />
-                <span>Dates & Agenda</span>
+                <span>{siteSettings.heroSecondaryButtonText || 'Dates & Agenda'}</span>
               </button>
             </motion.div>
           </div>
