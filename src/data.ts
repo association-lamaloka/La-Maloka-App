@@ -1,4 +1,4 @@
-import { DanceClass, DanceEvent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData } from './types';
+import { DanceClass, DanceEvent, FooterContent, HomePageContent, PhotoItem, VideoItem, SiteSettings, DanceRoom, PricingPlan, GeneralConditionsData, MembershipTerms, NavigationItem, RegistrationProcess } from './types';
 
 export const GENERATED_HERO_IMAGE = 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1200';
 export const GENERATED_MOTION_IMAGE = 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=1200';
@@ -518,6 +518,32 @@ export const DEFAULT_GENERAL_CONDITIONS: GeneralConditionsData = {
   ]
 };
 
+export const DEFAULT_REGISTRATION_PROCESS: RegistrationProcess = {
+  title: 'Comment s’inscrire ?',
+  steps: [
+    'Choisir le cours et l’horaire souhaités.',
+    'Cliquer sur “S’inscrire”.',
+    'Compléter le formulaire sécurisé sur HelloAsso.',
+    'Régler la cotisation ou suivre les modalités proposées.',
+    'Recevoir la confirmation d’inscription par e-mail.',
+  ].map((text, index) => ({ id: `step-${index + 1}`, text, order: index })),
+  finalNote: 'Pour un cours d’essai, utilisez le lien dédié lorsqu’il est disponible ou contactez l’association.',
+  visible: true,
+};
+
+export const DEFAULT_MEMBERSHIP_TERMS: MembershipTerms = {
+  ...DEFAULT_GENERAL_CONDITIONS,
+  sections: DEFAULT_GENERAL_CONDITIONS.sections.map((section, order) => ({ ...section, order })),
+  visible: true,
+};
+
+export const DEFAULT_NAVIGATION: NavigationItem[] = [
+  { id: 'nav-home', label: 'Accueil', destination: 'accueil', order: 0, active: true },
+  { id: 'nav-courses', label: 'Cours', destination: 'cours', order: 1, active: true },
+  { id: 'nav-agenda', label: 'Agenda', destination: 'agenda', order: 2, active: true },
+  { id: 'nav-gallery', label: 'Photos & Vidéos', destination: 'galerie', order: 3, active: true },
+];
+
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   associationName: 'La Maloka',
   tagline: 'Association de Danse Tropicale • Salsa Cubaine & Cardio Latino',
@@ -624,4 +650,50 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     showEventsCalendar: true,
     allowOnlineRegistrations: false
   }
+};
+
+export const DEFAULT_HOME_PAGE: HomePageContent = {
+  eyebrow: 'Salsa Cubaine & Cardio Latino',
+  headline: 'La Danse et le Rythme se Vivent à',
+  highlight: 'La Maloka',
+  description: DEFAULT_SITE_SETTINGS.heroSubheadline,
+  heroImageUrl: DEFAULT_SITE_SETTINGS.heroImage ?? '',
+  logoUrl: '',
+  overlayTitle: 'Salsa Cubaine & Cardio Latino',
+  overlayText: 'Le point de rencontre des passionnés de danse tropicale',
+  overlayImageUrl: DEFAULT_SITE_SETTINGS.heroImage ?? '',
+  bannerText: DEFAULT_SITE_SETTINGS.registrationInfo.bannerText,
+  bannerButtonText: 'Consulter les Dates',
+  bannerButtonDestination: 'cours',
+  primaryButtonText: 'Planning, tarifs & cours 2026-2027',
+  primaryButtonDestination: 'cours',
+  secondaryButtonText: 'Dates & Agenda',
+  secondaryButtonDestination: 'agenda',
+  locationBadgeOne: 'Fontenay-le-Fleury',
+  locationBadgeTwo: 'La Queue-les-Yvelines',
+  seasonBadge: 'Saison 2026 - 2027',
+  sections: [
+    { id: 'disciplines', title: 'Choisissez Votre Univers de Danse', subtitle: 'Nos Deux Disciplines', order: 0, visible: true },
+  ],
+  published: true,
+};
+
+export const DEFAULT_FOOTER: FooterContent = {
+  description: 'Association de Danse Tropicale dédiée à la Salsa Cubaine & au Cardio Latino.',
+  address: `${DEFAULT_SITE_SETTINGS.locationFontenay} · ${DEFAULT_SITE_SETTINGS.locationLaQueue}`,
+  email: DEFAULT_SITE_SETTINGS.contactEmail,
+  phone: DEFAULT_SITE_SETTINGS.contactPhone,
+  facebookUrl: DEFAULT_SITE_SETTINGS.facebookUrl ?? '',
+  instagramUrl: DEFAULT_SITE_SETTINGS.instagramUrl ?? '',
+  youtubeUrl: DEFAULT_SITE_SETTINGS.youtubeUrl ?? '',
+  links: [{ id: 'terms', label: 'Conditions générales d’adhésion', destination: 'conditions', order: 0, visible: true }],
+  legalNotice: '',
+  copyright: '© 2026 Association La Maloka. Salsa Cubaine & Cardio Latino dans les Yvelines.',
+  blocks: [
+    { id: 'brand', label: 'Association', order: 0, visible: true },
+    { id: 'contact', label: 'Contact', order: 1, visible: true },
+    { id: 'locations', label: 'Adresses', order: 2, visible: true },
+    { id: 'links', label: 'Liens', order: 3, visible: true },
+  ],
+  published: true,
 };

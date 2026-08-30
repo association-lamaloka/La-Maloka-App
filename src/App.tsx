@@ -1,21 +1,71 @@
 import { useEffect, useState } from 'react';
+import { FirebaseError } from 'firebase/app';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { Hero } from './components/Hero';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
 import { SimpleAdmin } from './components/SimpleAdmin';
 import { LandingContent } from './components/LandingContent';
 import { TropicalPatternBG } from './components/TropicalDecorations';
-import { DEFAULT_SITE_SETTINGS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
-import { PhotoItem, SiteSettings } from './types';
-import { subscribeGallery, subscribeSiteSettings } from './services/firestoreService';
+import { DEFAULT_FOOTER, DEFAULT_HOME_PAGE, DEFAULT_MEMBERSHIP_TERMS, DEFAULT_NAVIGATION, DEFAULT_REGISTRATION_PROCESS, DEFAULT_SITE_SETTINGS, DEFAULT_VIDEOS, DANCE_CLASSES, DANCE_EVENTS, PHOTO_GALLERY } from './data';
+import { DanceClass, FooterContent, HomePageContent, MembershipTerms, NavigationItem, PhotoItem, RegistrationProcess, SiteSettings, VideoItem } from './types';
+import { subscribeCourses, subscribeFooter, subscribeHomePage, subscribeEvents, subscribeGallery, subscribeMembershipTerms, subscribeNavigation, subscribeRegistrationProcess, subscribeSiteSettings, subscribeVideos } from './services/firestoreService';
+import { auth, authPersistenceReady } from './firebase';
 
-type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'administration';
+type View = 'accueil' | 'cours' | 'agenda' | 'galerie' | 'conditions' | 'administration';
+const ADMIN_EMAIL = 'association.lamaloka@gmail.com';
+const firebaseErrorMessage = (caught: unknown) => `La connexion sécurisée avec Google a échoué. Code Firebase : ${caught instanceof FirebaseError ? caught.code : 'auth/unknown-error'}.`;
 
 export default function App() {
   const [view, setView] = useState<View>('accueil');
   const [darkMode, setDarkMode] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [photos, setPhotos] = useState<PhotoItem[]>(PHOTO_GALLERY);
+  const [courses, setCourses] = useState<DanceClass[]>(DANCE_CLASSES);
+  const [videos, setVideos] = useState<VideoItem[]>(DEFAULT_VIDEOS);
+  const [registration, setRegistration] = useState<RegistrationProcess>(DEFAULT_REGISTRATION_PROCESS);
+  const [terms, setTerms] = useState<MembershipTerms>(DEFAULT_MEMBERSHIP_TERMS);
+  const [navigation, setNavigation] = useState<NavigationItem[]>(DEFAULT_NAVIGATION);
+  const [events, setEvents] = useState(DANCE_EVENTS);
+  const [homePage, setHomePage] = useState<HomePageContent>(DEFAULT_HOME_PAGE);
+  const [footerContent, setFooterContent] = useState<FooterContent>(DEFAULT_FOOTER);
+  const [adminUser, setAdminUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const [contentLoading, setContentLoading] = useState(true);
+  const [contentError, setContentError] = useState('');
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+    let active = true;
+    const acceptUser = async (current: User | null) => {
+      if (!active) return;
+      if (current && (current.email !== ADMIN_EMAIL || !current.emailVerified)) {
+        await signOut(auth);
+        if (!active) return;
+        setAdminUser(null);
+        setAuthError('Ce compte Google n’est pas autorisé à administrer La Maloka.');
+        setView('administration');
+        return;
+      }
+      setAdminUser(current);
+    };
+    const initializeAuth = async () => {
+      try {
+        await authPersistenceReady;
+        unsubscribe = onAuthStateChanged(auth, async (current) => {
+          await acceptUser(current);
+          if (active) setAuthLoading(false);
+        });
+      } catch (caught) {
+        setAuthError(firebaseErrorMessage(caught));
+        setView('administration');
+        setAuthLoading(false);
+      }
+    };
+    void initializeAuth();
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     // Remove legacy caches that may contain member data or shared credentials.
@@ -29,11 +79,27 @@ export default function App() {
       'maloka_site_settings',
     ].forEach((key) => localStorage.removeItem(key));
 
-    const unsubscribeSettings = subscribeSiteSettings(setSettings);
+    const unsubscribeSettings = subscribeSiteSettings((value) => { setSettings(value); setContentLoading(false); }, () => { setContentError('Le contenu distant est indisponible. Les valeurs initiales sûres sont affichées.'); setContentLoading(false); });
     const unsubscribeGallery = subscribeGallery(setPhotos);
+    const unsubscribeCourses = subscribeCourses(setCourses);
+    const unsubscribeVideos = subscribeVideos(setVideos);
+    const unsubscribeRegistration = subscribeRegistrationProcess(setRegistration);
+    const unsubscribeTerms = subscribeMembershipTerms(setTerms);
+    const unsubscribeNavigation = subscribeNavigation(setNavigation);
+    const unsubscribeEvents = subscribeEvents(setEvents);
+    const unsubscribeHome = subscribeHomePage(setHomePage);
+    const unsubscribeFooter = subscribeFooter(setFooterContent);
     return () => {
       unsubscribeSettings();
       unsubscribeGallery();
+      unsubscribeCourses();
+      unsubscribeVideos();
+      unsubscribeRegistration();
+      unsubscribeTerms();
+      unsubscribeNavigation();
+      unsubscribeEvents();
+      unsubscribeHome();
+      unsubscribeFooter();
     };
   }, []);
 
@@ -54,26 +120,32 @@ export default function App() {
         setCurrentTab={navigate}
         isDarkMode={darkMode}
         toggleDarkMode={() => setDarkMode((current) => !current)}
+        items={navigation}
+        logoUrl={settings.logoUrl}
       />
 
       <main>
-        {view === 'accueil' && (
+        {contentLoading && <p role="status" className="bg-amber-50 p-3 text-center text-sm dark:bg-amber-950/30">Chargement du contenu…</p>}
+        {contentError && <p role="status" className="bg-amber-50 p-3 text-center text-sm dark:bg-amber-950/30">{contentError}</p>}
+        {view === 'accueil' && homePage.published && (
           <Hero
             siteSettings={settings}
+            content={homePage}
             onExploreClasses={() => navigate('cours')}
             onViewCalendar={() => navigate('agenda')}
             onViewRegistrationDates={() => navigate('cours')}
           />
         )}
-        {view === 'cours' && <LandingContent section="cours" classes={DANCE_CLASSES} />}
-        {view === 'agenda' && <LandingContent section="agenda" events={DANCE_EVENTS} />}
-        {view === 'galerie' && <LandingContent section="galerie" photos={photos} />}
+        {view === 'cours' && <LandingContent section="cours" pageTitle={settings.coursesPageTitle} pageSubtitle={settings.coursesPageSubtitle} classes={courses} registration={registration} terms={terms} onShowTerms={() => navigate('conditions')} />}
+        {view === 'agenda' && <LandingContent section="agenda" pageTitle={settings.agendaPageTitle} pageSubtitle={settings.agendaPageSubtitle} events={events} />}
+        {view === 'galerie' && <LandingContent section="galerie" pageTitle={settings.galleryPageTitle} pageSubtitle={settings.galleryPageSubtitle} photos={photos} videos={videos} />}
+        {view === 'conditions' && <LandingContent section="conditions" terms={terms} onBack={() => navigate('cours')} />}
         {view === 'administration' && (
-          <SimpleAdmin settings={settings} photos={photos} />
+          <SimpleAdmin settings={settings} homePage={homePage} footerContent={footerContent} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
         )}
       </main>
 
-      <Footer setCurrentTab={navigate} siteSettings={settings} />
+      {footerContent.published && <Footer setCurrentTab={navigate} siteSettings={settings} content={footerContent} />}
     </div>
   );
 }

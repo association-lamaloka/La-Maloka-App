@@ -1,36 +1,172 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAssociationTeam() {
+    function isAdmin() {
       return request.auth != null
-        && request.auth.token.associationTeam == true;
+        && request.auth.token.email == 'association.lamaloka@gmail.com'
+        && request.auth.token.email_verified == true;
     }
+    function noPassword() { return !request.resource.data.keys().hasAny(['adminPassword']); }
+    function validOrder(value) { return value is int && value >= 0 && value <= 10000; }
+    function optionalHttps(field) { return !(field in request.resource.data) || (request.resource.data[field] is string && (request.resource.data[field] == '' || request.resource.data[field].matches('https://.*'))); }
 
-    // Public landing-page content. Editing additionally requires the
-    // `associationTeam` custom claim, issued only through the Firebase Admin SDK.
-    match /site_settings/{docId} {
+    match /site_settings/{id} {
       allow read: if true;
-      allow create, update, delete: if isAssociationTeam()
-        && !request.resource.data.keys().hasAny(['adminPassword']);
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['associationName','tagline','logoUrl','heroHeadline','heroSubheadline','heroImage','contactEmail','contactPhone','facebookUrl','instagramUrl','youtubeUrl','locationFontenay','locationLaQueue','season','footerLegalText','copyrightText','coursesPageTitle','coursesPageSubtitle','agendaPageTitle','agendaPageSubtitle','galleryPageTitle','galleryPageSubtitle','bannerText','bannerVisible','heroPrimaryButtonText','heroSecondaryButtonText','updatedAt'])
+        && request.resource.data.associationName is string && request.resource.data.associationName.size() <= 120
+        && request.resource.data.tagline is string && request.resource.data.tagline.size() <= 200
+        && request.resource.data.heroHeadline is string && request.resource.data.heroHeadline.size() <= 160
+        && request.resource.data.heroSubheadline is string && request.resource.data.heroSubheadline.size() <= 300
+        && request.resource.data.contactEmail is string && request.resource.data.contactEmail.size() <= 254
+        && request.resource.data.contactPhone is string && request.resource.data.contactPhone.size() <= 40
+        && request.resource.data.locationFontenay is string && request.resource.data.locationFontenay.size() <= 300
+        && request.resource.data.locationLaQueue is string && request.resource.data.locationLaQueue.size() <= 300
+        && request.resource.data.season is string && request.resource.data.season.size() <= 80
+        && request.resource.data.footerLegalText is string && request.resource.data.footerLegalText.size() <= 1000
+        && request.resource.data.copyrightText is string && request.resource.data.copyrightText.size() <= 300
+        && request.resource.data.coursesPageTitle is string && request.resource.data.coursesPageTitle.size() <= 120
+        && request.resource.data.coursesPageSubtitle is string && request.resource.data.coursesPageSubtitle.size() <= 300
+        && request.resource.data.agendaPageTitle is string && request.resource.data.agendaPageTitle.size() <= 120
+        && request.resource.data.agendaPageSubtitle is string && request.resource.data.agendaPageSubtitle.size() <= 300
+        && request.resource.data.galleryPageTitle is string && request.resource.data.galleryPageTitle.size() <= 120
+        && request.resource.data.galleryPageSubtitle is string && request.resource.data.galleryPageSubtitle.size() <= 300
+        && request.resource.data.bannerText is string && request.resource.data.bannerText.size() <= 300
+        && request.resource.data.bannerVisible is bool
+        && request.resource.data.heroPrimaryButtonText is string && request.resource.data.heroPrimaryButtonText.size() <= 100
+        && request.resource.data.heroSecondaryButtonText is string && request.resource.data.heroSecondaryButtonText.size() <= 100
+        && optionalHttps('logoUrl') && optionalHttps('heroImage') && optionalHttps('facebookUrl')
+        && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl');
+      allow delete: if isAdmin();
     }
-
-    match /gallery/{photoId} {
+    match /courses/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','name','description','category','level','instructor','schedule','location','image','season','priceMonthly','annualPrice','isFree','helloAssoUrl','registrationButtonText','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.name is string && request.resource.data.name.size() <= 180
+        && request.resource.data.description is string && request.resource.data.description.size() <= 2000
+        && request.resource.data.category is string && request.resource.data.category.size() <= 80
+        && request.resource.data.level is string && request.resource.data.level.size() <= 80
+        && request.resource.data.instructor is string && request.resource.data.instructor.size() <= 120
+        && request.resource.data.schedule is string && request.resource.data.schedule.size() <= 160
+        && request.resource.data.location is string && request.resource.data.location.size() <= 180
+        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && request.resource.data.season is string && request.resource.data.season.size() <= 80
+        && request.resource.data.priceMonthly is number && request.resource.data.priceMonthly >= 0
+        && request.resource.data.annualPrice is number && request.resource.data.annualPrice >= 0
+        && request.resource.data.isFree is bool && request.resource.data.active is bool
+        && request.resource.data.registrationButtonText is string && request.resource.data.registrationButtonText.size() <= 80
+        && optionalHttps('helloAssoUrl') && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /gallery/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','url','driveFileId','category','description','date','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 120
+        && request.resource.data.url is string && request.resource.data.url.matches('https://.*')
+        && request.resource.data.driveFileId is string && (request.resource.data.driveFileId == '' || request.resource.data.driveFileId.matches('^[A-Za-z0-9_-]{20,100}$'))
+        && request.resource.data.category is string && request.resource.data.category.size() <= 80
+        && request.resource.data.description is string && request.resource.data.description.size() <= 1000
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /events/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','type','date','time','location','description','price','image','externalUrl','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 180
+        && request.resource.data.type is string && request.resource.data.type.size() <= 80
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.time is string && request.resource.data.time.size() <= 80
+        && request.resource.data.location is string && request.resource.data.location.size() <= 200
+        && request.resource.data.description is string && request.resource.data.description.size() <= 2000
+        && request.resource.data.price is number && request.resource.data.price >= 0
+        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && optionalHttps('externalUrl') && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /navigation/{id} {
       allow read: if true;
-      allow create, update: if isAssociationTeam()
-        && request.resource.data.keys().hasOnly(['id', 'title', 'url', 'description', 'category', 'date'])
-        && request.resource.data.id == photoId
-        && request.resource.data.title is string
-        && request.resource.data.title.size() <= 120
-        && request.resource.data.url is string
-        && request.resource.data.url.matches('https://.*');
-      allow delete: if isAssociationTeam();
+      allow create, update: if isAdmin() && noPassword()
+        && id == 'main'
+        && request.resource.data.keys().hasOnly(['items'])
+        && request.resource.data.items is list && request.resource.data.items.size() <= 12;
+      allow delete: if isAdmin();
     }
-
-    // Legacy collections can contain personal or health data. They are closed
-    // completely while their remote documents are purged by a project owner.
+    match /pages/{pageId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && (
+          (pageId == 'home'
+            && request.resource.data.keys().hasOnly(['eyebrow','headline','highlight','description','heroImageUrl','logoUrl','overlayTitle','overlayText','overlayImageUrl','bannerText','bannerButtonText','bannerButtonDestination','primaryButtonText','primaryButtonDestination','secondaryButtonText','secondaryButtonDestination','locationBadgeOne','locationBadgeTwo','seasonBadge','sections','published'])
+            && request.resource.data.eyebrow is string && request.resource.data.eyebrow.size() <= 160
+            && request.resource.data.headline is string && request.resource.data.headline.size() <= 180
+            && request.resource.data.highlight is string && request.resource.data.highlight.size() <= 120
+            && request.resource.data.description is string && request.resource.data.description.size() <= 1200
+            && request.resource.data.heroImageUrl is string && request.resource.data.heroImageUrl.matches('https://.*')
+            && request.resource.data.logoUrl is string && (request.resource.data.logoUrl == '' || request.resource.data.logoUrl.matches('https://.*'))
+            && request.resource.data.overlayImageUrl is string && request.resource.data.overlayImageUrl.matches('https://.*')
+            && request.resource.data.bannerButtonDestination in ['cours','agenda']
+            && request.resource.data.primaryButtonDestination in ['cours','agenda']
+            && request.resource.data.secondaryButtonDestination in ['cours','agenda']
+            && request.resource.data.sections is list && request.resource.data.sections.size() <= 20
+            && request.resource.data.published is bool)
+          ||
+          (pageId == 'footer'
+            && request.resource.data.keys().hasOnly(['description','address','email','phone','facebookUrl','instagramUrl','youtubeUrl','links','legalNotice','copyright','blocks','published'])
+            && request.resource.data.description is string && request.resource.data.description.size() <= 1200
+            && request.resource.data.address is string && request.resource.data.address.size() <= 500
+            && request.resource.data.email is string && request.resource.data.email.size() <= 254
+            && request.resource.data.phone is string && request.resource.data.phone.size() <= 40
+            && optionalHttps('facebookUrl') && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl')
+            && request.resource.data.links is list && request.resource.data.links.size() <= 20
+            && request.resource.data.legalNotice is string && request.resource.data.legalNotice.size() <= 2000
+            && request.resource.data.copyright is string && request.resource.data.copyright.size() <= 300
+            && request.resource.data.blocks is list && request.resource.data.blocks.size() <= 12
+            && request.resource.data.published is bool)
+        );
+      allow delete: if isAdmin() && pageId in ['home','footer'];
+    }
+    match /videos/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['id','title','youtubeId','description','date','active','order'])
+        && request.resource.data.id == id
+        && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && request.resource.data.youtubeId is string && request.resource.data.youtubeId.matches('^[A-Za-z0-9_-]{11}$')
+        && request.resource.data.description is string && request.resource.data.description.size() <= 1000
+        && request.resource.data.date is string && request.resource.data.date.size() <= 20
+        && request.resource.data.active is bool && validOrder(request.resource.data.order);
+      allow delete: if isAdmin();
+    }
+    match /registration_process/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['title','steps','finalNote','visible'])
+        && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && request.resource.data.steps is list && request.resource.data.steps.size() <= 20
+        && request.resource.data.finalNote is string && request.resource.data.finalNote.size() <= 1000
+        && request.resource.data.visible is bool;
+      allow delete: if isAdmin();
+    }
+    match /membership_terms/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && noPassword()
+        && request.resource.data.keys().hasOnly(['title','subtitle','lastUpdated','sections','visible'])
+        && request.resource.data.title is string && request.resource.data.title.size() <= 180
+        && request.resource.data.subtitle is string && request.resource.data.subtitle.size() <= 300
+        && request.resource.data.lastUpdated is string && request.resource.data.lastUpdated.size() <= 80
+        && request.resource.data.sections is list && request.resource.data.sections.size() <= 30
+        && request.resource.data.visible is bool;
+      allow delete: if isAdmin();
+    }
     match /inscriptions/{document=**} { allow read, write: if false; }
     match /health_forms/{document=**} { allow read, write: if false; }
-
     match /{document=**} { allow read, write: if false; }
   }
 }

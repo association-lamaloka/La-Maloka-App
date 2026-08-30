@@ -1,12 +1,12 @@
 {
-  "projectId": "western-theater-sds98",
-  "appId": "1:1057151708249:web:636eacfb738668ece85548",
-  "apiKey": "AIzaSyBCog9JvAXp_8lrsEiYkwtIt-2mujOhy20",
-  "authDomain": "western-theater-sds98.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-lamaloka-0621b906-ebb7-4b2a-82bf-a51c02ec390b",
-  "storageBucket": "western-theater-sds98.firebasestorage.app",
-  "messagingSenderId": "1057151708249",
+  "projectId": "la-maloka-production-2026",
+  "appId": "1:7837176432:web:76a25cbb764d1877bb9ab5",
+  "apiKey": "AIzaSyDRKzIKH4lbxPOp4JBilQtp4FM-oqE13JQ",
+  "authDomain": "la-maloka-production-2026.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "la-maloka-production-2026.firebasestorage.app",
+  "messagingSenderId": "7837176432",
   "measurementId": "",
-  "oAuthClientId": "1057151708249-fimfm8651l21in2huo48f96oebveite8.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const upload = readFileSync(new URL('../api/media/upload.ts', import.meta.url), 'utf8');
+const drive = readFileSync(new URL('../api/media/drive.ts', import.meta.url), 'utf8');
+const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
+const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+assert.match(upload, /request\.headers\.authorization/, 'Le endpoint doit exiger un Firebase ID token.');
+assert.match(upload, /accounts:lookup/, 'Le token doit être vérifié côté serveur auprès de Firebase Auth.');
+assert.match(upload, /association\.lamaloka@gmail\.com/, 'Seul le compte officiel est autorisé.');
+assert.match(upload, /emailVerified === true/, 'Le courriel doit être vérifié.');
+for (const mime of ['image/jpeg','image/png','image/webp','image/avif']) assert.match(upload, new RegExp(mime.replace('/','\\/')));
+assert.match(upload, /BLOB_READ_WRITE_TOKEN/, 'Le secret Blob doit venir exclusivement de l’environnement serveur.');
+assert.doesNotMatch(upload, /VITE_BLOB|NEXT_PUBLIC/, 'Le secret ne doit jamais être public.');
+assert.match(drive, /\^\[A-Za-z0-9_-\]\{20,100\}\$/, 'Le fileId Drive doit être strictement validé.');
+assert.match(rules, /match \/navigation\/{id}/);
+assert.match(rules, /driveFileId\.matches\('\^\[A-Za-z0-9_-\]\{20,100\}\$'\)/);
+assert.match(env, /^BLOB_READ_WRITE_TOKEN=$/m);
+console.log('Médias vérifiés : token Firebase, admin vérifié, formats, taille, Blob serveur, Drive et règles.');

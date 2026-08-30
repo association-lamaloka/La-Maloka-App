@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, Sparkles, MapPin, Music, Flame, CheckCircle, ArrowRight, Clock, Award, Info, HeartHandshake, Mail, Phone, MessageCircle, Instagram, QrCode, ShieldCheck } from 'lucide-react';
 import { FloatingMonstera, FloatingHibiscus, FloatingParrot, LaMalokaOfficialLogoSVG, LaMalokaLogoBadge } from './TropicalDecorations';
-import { SiteSettings, HomepageVignette } from '../types';
+import { HomePageContent, SiteSettings, HomepageVignette } from '../types';
 import { InstagramQRModal } from './InstagramQRModal';
 import qrImage from '../assets/images/instagram_qr_1786885774879.jpg';
 
@@ -11,13 +11,15 @@ interface HeroProps {
   onExploreClasses: (categoryFilter?: string) => void;
   onViewCalendar: () => void;
   onViewRegistrationDates: () => void;
+  content: HomePageContent;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   siteSettings,
   onExploreClasses,
   onViewCalendar,
-  onViewRegistrationDates
+  onViewRegistrationDates,
+  content
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const { vignettes, registrationInfo, moduleToggles } = siteSettings;
@@ -37,19 +39,19 @@ export const Hero: React.FC<HeroProps> = ({
       <FloatingParrot delay={2} className="absolute top-16 right-1/4 text-rose-500/5 w-28 h-28 hidden md:block" />
 
       {/* Top Registration Notification Banner (if active) */}
-      {moduleToggles.showRegistrationBanner && registrationInfo.bannerText && (
+      {content.published && content.bannerText && (
         <div className="bg-gradient-to-r from-orange-500 via-rose-500 to-emerald-600 text-white text-xs sm:text-sm font-medium py-3 px-4 shadow-sm relative z-20">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="shrink-0 animate-bounce" />
-              <span>{registrationInfo.bannerText}</span>
+              <span>{content.bannerText}</span>
             </div>
             <button
               id="hero-banner-dates-btn"
-              onClick={onViewRegistrationDates}
+              onClick={content.bannerButtonDestination === 'agenda' ? onViewCalendar : onViewRegistrationDates}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all duration-150 backdrop-blur-sm whitespace-nowrap cursor-pointer"
             >
-              Consulter les Dates ➔
+              {content.bannerButtonText} ➔
             </button>
           </div>
         </div>
@@ -68,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 text-xs font-semibold uppercase tracking-wider"
             >
               <Sparkles size={14} className="animate-spin text-orange-500" />
-              <span>{siteSettings.tagline || 'Salsa Cubaine & Cardio Latino'}</span>
+              <span>{content.eyebrow || siteSettings.tagline || 'Salsa Cubaine & Cardio Latino'}</span>
             </motion.div>
 
             <div className="space-y-4">
@@ -78,9 +80,9 @@ export const Hero: React.FC<HeroProps> = ({
                 transition={{ duration: 0.7, delay: 0.1 }}
                 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight"
               >
-                {siteSettings.heroHeadline || 'La Danse et le Rythme se Vivent à'}{' '}
+                {content.headline || siteSettings.heroHeadline || 'La Danse et le Rythme se Vivent à'}{' '}
                 <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-emerald-500">
-                  {siteSettings.associationName || 'La Maloka'}
+                  {content.highlight || siteSettings.associationName || 'La Maloka'}
                   <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-400/30" viewBox="0 0 100 10" preserveAspectRatio="none">
                     <path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
                   </svg>
@@ -93,7 +95,7 @@ export const Hero: React.FC<HeroProps> = ({
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="text-base sm:text-lg md:text-xl text-zinc-600 dark:text-zinc-300 max-w-2xl mx-auto lg:mx-0 font-light leading-relaxed"
               >
-                {siteSettings.heroSubheadline}
+                {content.description || siteSettings.heroSubheadline}
               </motion.p>
             </div>
 
@@ -106,15 +108,15 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 rounded-xl border border-rose-100 dark:border-rose-900/40">
                 <MapPin size={13} className="text-rose-500" />
-                <span className="font-semibold">Fontenay-le-Fleury</span>
+                <span className="font-semibold">{content.locationBadgeOne}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
                 <MapPin size={13} className="text-emerald-500" />
-                <span className="font-semibold">La Queue-les-Yvelines</span>
+                <span className="font-semibold">{content.locationBadgeTwo}</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-100 dark:border-amber-900/40">
                 <Award size={13} className="text-amber-500" />
-                <span className="font-semibold">Saison 2026 - 2027</span>
+                <span className="font-semibold">{content.seasonBadge}</span>
               </div>
             </motion.div>
 
@@ -127,21 +129,21 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <button
                 id="hero-explore-classes-btn"
-                onClick={() => onExploreClasses()}
+                onClick={content.primaryButtonDestination === 'agenda' ? onViewCalendar : () => onExploreClasses()}
                 className="px-8 py-4 bg-gradient-to-r from-orange-500 via-rose-500 to-rose-600 hover:from-orange-600 hover:to-rose-700 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 <span>
-                  Planning, tarifs & cours 2026-2027
+                  {content.primaryButtonText}
                 </span>
                 <ArrowRight size={18} />
               </button>
               <button
                 id="hero-view-calendar-btn"
-                onClick={onViewCalendar}
+                onClick={content.secondaryButtonDestination === 'cours' ? () => onExploreClasses() : onViewCalendar}
                 className="px-7 py-4 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all duration-200 border border-emerald-200 dark:border-emerald-900/50 cursor-pointer text-center flex items-center justify-center gap-2"
               >
                 <Calendar size={18} />
-                <span>Dates & Agenda</span>
+                <span>{content.secondaryButtonText}</span>
               </button>
             </motion.div>
           </div>
@@ -156,7 +158,7 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-zinc-900">
                 <img
-                  src={siteSettings.heroImage || "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1000"}
+                  src={content.heroImageUrl || siteSettings.heroImage || "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1000"}
                   alt="La Maloka Salsa Cubaine et Cardio Latino"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                   referrerPolicy="no-referrer"
@@ -168,8 +170,8 @@ export const Hero: React.FC<HeroProps> = ({
                     <span className="px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-black uppercase tracking-wider">Association</span>
                     <span className="text-xs font-semibold text-zinc-200">Fontenay & La Queue-les-Yvelines</span>
                   </div>
-                  <h3 className="text-base font-bold mt-1.5 text-white">Salsa Cubaine & Cardio Latino</h3>
-                  <p className="text-xs text-zinc-300 font-light mt-0.5">Le point de rencontre des passionnés de danse tropicale</p>
+                  <h3 className="text-base font-bold mt-1.5 text-white">{content.overlayTitle}</h3>
+                  <p className="text-xs text-zinc-300 font-light mt-0.5">{content.overlayText}</p>
                 </div>
               </div>
             </motion.div>
@@ -183,7 +185,7 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-2.5 rounded-2xl shadow-2xl border border-lime-300/80 dark:border-zinc-700 flex items-center gap-3">
                 <div className="w-16 h-13 sm:w-20 sm:h-16 rounded-xl overflow-hidden shadow-md bg-[#95B208] p-0.5 shrink-0">
-                  <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />
+                  {content.logoUrl ? <img src={content.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />}
                 </div>
                 <div className="text-left pr-2">
                   <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-white">La Maloka</h4>
@@ -199,9 +201,7 @@ export const Hero: React.FC<HeroProps> = ({
               onClick={onViewRegistrationDates}
               className="absolute -top-4 -right-2 bg-white dark:bg-zinc-800 p-3.5 rounded-2xl shadow-xl border border-rose-100 dark:border-zinc-700 flex items-center gap-3 z-20 cursor-pointer hover:scale-105 transition-transform"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center text-white text-lg">
-                📅
-              </div>
+              <div className="w-10 h-10 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center text-white text-lg">{content.overlayImageUrl ? <img src={content.overlayImageUrl} alt="" className="h-full w-full object-cover" /> : "📅"}</div>
               <div className="text-left">
                 <h4 className="text-xs font-bold text-zinc-900 dark:text-white">Forums & Inscriptions</h4>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Septembre 2026</p>
@@ -219,12 +219,8 @@ export const Hero: React.FC<HeroProps> = ({
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
-          <span className="text-xs uppercase font-extrabold tracking-widest text-rose-500 dark:text-rose-400">
-            Nos Deux Disciplines
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white">
-            Choisissez Votre Univers de Danse
-          </h2>
+          <span className="text-xs uppercase font-extrabold tracking-widest text-rose-500 dark:text-rose-400">{content.sections.find((section) => section.id === 'disciplines' && section.visible)?.subtitle || 'Nos Deux Disciplines'}</span>
+          <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white">{content.sections.find((section) => section.id === 'disciplines' && section.visible)?.title || 'Choisissez Votre Univers de Danse'}</h2>
           <p className="text-zinc-600 dark:text-zinc-400 text-sm sm:text-base font-light">
             À La Maloka, nous concentrons toute notre énergie et notre pédagogie sur deux pratiques complémentaires et dynamiques.
           </p>

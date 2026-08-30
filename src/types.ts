@@ -19,6 +19,8 @@ export interface DanceClass {
   description: string;
   priceMonthly: number;
   annualPrice?: number;
+  isFree?: boolean;
+  order?: number;
   image: string;
   category: 'Salsa Cubaine' | 'Cardio Latino' | string;
   location: 'Fontenay-le-Fleury' | 'La Queue-les-Yvelines' | string;
@@ -39,6 +41,7 @@ export interface DanceClass {
   collectedAmount?: number; // Montant collecté en €
   daysRemaining?: number; // Nombre de jours restants
   helloAssoUrl?: string; // Lien direct HelloAsso
+  registrationButtonText?: string;
   lastHelloAssoSync?: string; // Horodatage de la dernière synchronisation
   trialDate?: string; // Pour les cours d'essai (ex: 11 septembre 2026)
   isTrialClass?: boolean;
@@ -58,6 +61,8 @@ export interface DanceEvent {
   totalSpots: number;
   image: string;
   active?: boolean;
+  order?: number;
+  externalUrl?: string;
 }
 
 export interface PhotoItem {
@@ -68,6 +73,9 @@ export interface PhotoItem {
   description: string;
   date?: string;
   likes?: number;
+  active?: boolean;
+  order?: number;
+  driveFileId?: string;
 }
 
 export interface VideoItem {
@@ -83,6 +91,70 @@ export interface VideoItem {
   date?: string;
   featured?: boolean;
   likes?: number;
+  active?: boolean;
+  order?: number;
+}
+
+export interface RegistrationProcess {
+  title: string;
+  steps: Array<{ id: string; text: string; order: number }>;
+  finalNote: string;
+  visible: boolean;
+}
+
+export interface MembershipTerms {
+  title: string;
+  subtitle: string;
+  lastUpdated: string;
+  sections: Array<{ id: string; title: string; content: string; order: number }>;
+  visible: boolean;
+}
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  destination: 'accueil' | 'cours' | 'agenda' | 'galerie';
+  order: number;
+  active: boolean;
+}
+
+export interface HomePageContent {
+  eyebrow: string;
+  headline: string;
+  highlight: string;
+  description: string;
+  heroImageUrl: string;
+  logoUrl: string;
+  overlayTitle: string;
+  overlayText: string;
+  overlayImageUrl: string;
+  bannerText: string;
+  bannerButtonText: string;
+  bannerButtonDestination: 'cours' | 'agenda';
+  primaryButtonText: string;
+  primaryButtonDestination: 'cours' | 'agenda';
+  secondaryButtonText: string;
+  secondaryButtonDestination: 'cours' | 'agenda';
+  locationBadgeOne: string;
+  locationBadgeTwo: string;
+  seasonBadge: string;
+  sections: Array<{ id: string; title: string; subtitle: string; order: number; visible: boolean }>;
+  published: boolean;
+}
+
+export interface FooterContent {
+  description: string;
+  address: string;
+  email: string;
+  phone: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  youtubeUrl: string;
+  links: Array<{ id: string; label: string; destination: 'cours' | 'agenda' | 'galerie' | 'conditions'; order: number; visible: boolean }>;
+  legalNotice: string;
+  copyright: string;
+  blocks: Array<{ id: string; label: string; order: number; visible: boolean }>;
+  published: boolean;
 }
 
 export interface HomepageVignette {
@@ -163,6 +235,7 @@ export interface RegistrationInfo {
 export interface SiteSettings {
   associationName: string;
   tagline: string;
+  logoUrl?: string;
   heroHeadline: string;
   heroSubheadline: string;
   heroImage?: string;
@@ -178,6 +251,19 @@ export interface SiteSettings {
   facebookUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  season?: string;
+  footerLegalText?: string;
+  copyrightText?: string;
+  coursesPageTitle?: string;
+  coursesPageSubtitle?: string;
+  agendaPageTitle?: string;
+  agendaPageSubtitle?: string;
+  galleryPageTitle?: string;
+  galleryPageSubtitle?: string;
+  bannerText?: string;
+  bannerVisible?: boolean;
+  heroPrimaryButtonText?: string;
+  heroSecondaryButtonText?: string;
   vignettes: HomepageVignette[];
   registrationInfo: RegistrationInfo;
   pricingPlans?: PricingPlan[];
@@ -191,4 +277,3 @@ export interface SiteSettings {
     allowOnlineRegistrations: boolean;
   };
 }
-
