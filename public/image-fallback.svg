@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title description">
+  <title id="title">La Maloka</title>
+  <desc id="description">Image de remplacement La Maloka sur un fond neutre.</desc>
+  <rect width="1200" height="800" fill="#f4f4f5"/>
+  <circle cx="600" cy="342" r="142" fill="#95b208"/>
+  <path d="M518 382c28-103 79-168 157-194-6 69-38 131-96 186 51-26 98-34 142-22-35 53-84 83-148 90-35 4-63-16-55-60Z" fill="#fff" opacity=".96"/>
+  <path d="M493 450c67-34 141-39 222-14" fill="none" stroke="#557219" stroke-width="22" stroke-linecap="round"/>
+  <text x="600" y="584" text-anchor="middle" fill="#3f3f46" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" letter-spacing="4">LA MALOKA</text>
+  <text x="600" y="640" text-anchor="middle" fill="#71717a" font-family="Arial, Helvetica, sans-serif" font-size="30" letter-spacing="7">SALSA &amp; CARDIO LATINO</text>
+</svg>
