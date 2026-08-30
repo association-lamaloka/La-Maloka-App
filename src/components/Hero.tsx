@@ -5,6 +5,7 @@ import { FloatingMonstera, FloatingHibiscus, FloatingParrot, LaMalokaOfficialLog
 import { HomePageContent, SiteSettings, HomepageVignette } from '../types';
 import { InstagramQRModal } from './InstagramQRModal';
 import qrImage from '../assets/images/instagram_qr_1786885774879.jpg';
+import { StructuralImage } from './StructuralImage';
 
 interface HeroProps {
   siteSettings: SiteSettings;
@@ -157,7 +158,7 @@ export const Hero: React.FC<HeroProps> = ({
               className="relative rounded-3xl overflow-hidden p-3 bg-gradient-to-tr from-orange-400 via-rose-500 to-emerald-500 shadow-2xl shadow-rose-500/25 max-w-md mx-auto lg:max-w-none"
             >
               <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-zinc-900">
-                <img
+                <StructuralImage
                   src={content.heroImageUrl || siteSettings.heroImage || "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1000"}
                   alt="La Maloka Salsa Cubaine et Cardio Latino"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
@@ -185,7 +186,7 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-2.5 rounded-2xl shadow-2xl border border-lime-300/80 dark:border-zinc-700 flex items-center gap-3">
                 <div className="w-16 h-13 sm:w-20 sm:h-16 rounded-xl overflow-hidden shadow-md bg-[#95B208] p-0.5 shrink-0">
-                  {content.logoUrl ? <img src={content.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />}
+                  {content.logoUrl ? <StructuralImage src={content.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />}
                 </div>
                 <div className="text-left pr-2">
                   <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-white">La Maloka</h4>
@@ -201,7 +202,7 @@ export const Hero: React.FC<HeroProps> = ({
               onClick={onViewRegistrationDates}
               className="absolute -top-4 -right-2 bg-white dark:bg-zinc-800 p-3.5 rounded-2xl shadow-xl border border-rose-100 dark:border-zinc-700 flex items-center gap-3 z-20 cursor-pointer hover:scale-105 transition-transform"
             >
-              <div className="w-10 h-10 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center text-white text-lg">{content.overlayImageUrl ? <img src={content.overlayImageUrl} alt="" className="h-full w-full object-cover" /> : "📅"}</div>
+              <div className="w-10 h-10 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center text-white text-lg">{content.overlayImageUrl ? <StructuralImage src={content.overlayImageUrl} alt="" className="h-full w-full object-cover" /> : "📅"}</div>
               <div className="text-left">
                 <h4 className="text-xs font-bold text-zinc-900 dark:text-white">Forums & Inscriptions</h4>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Septembre 2026</p>

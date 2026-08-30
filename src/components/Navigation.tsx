@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Menu, Moon, Shield, Sun, X } from 'lucide-react';
 import { LaMalokaOfficialLogoSVG } from './LaMalokaOfficialLogo';
+import { StructuralImage } from './StructuralImage';
 
 interface NavigationProps {
   currentTab: string;
@@ -30,7 +31,7 @@ export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMo
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
         <button onClick={() => navigate('accueil')} className="flex items-center gap-3 text-left" aria-label="Accueil La Maloka">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#95B208] p-1 shadow-md">
-            {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="h-full w-full" />}
+            {logoUrl ? <StructuralImage src={logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="h-full w-full" />}
           </span>
           <span>
             <strong className="block text-xl font-black text-[#557219] dark:text-lime-400">LA MALOKA</strong>

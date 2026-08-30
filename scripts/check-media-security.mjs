@@ -4,6 +4,8 @@ const upload = readFileSync(new URL('../api/media/upload.ts', import.meta.url), 
 const drive = readFileSync(new URL('../api/media/drive.ts', import.meta.url), 'utf8');
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+const uploader = readFileSync(new URL('../src/components/MediaUploader.tsx', import.meta.url), 'utf8');
+const admin = readFileSync(new URL('../src/components/SimpleAdmin.tsx', import.meta.url), 'utf8');
 assert.match(upload, /request\.headers\.authorization/, 'Le endpoint doit exiger un Firebase ID token.');
 assert.match(upload, /accounts:lookup/, 'Le token doit être vérifié côté serveur auprès de Firebase Auth.');
 assert.match(upload, /association\.lamaloka@gmail\.com/, 'Seul le compte officiel est autorisé.');
@@ -15,4 +17,8 @@ assert.match(drive, /\^\[A-Za-z0-9_-\]\{20,100\}\$/, 'Le fileId Drive doit être
 assert.match(rules, /match \/navigation\/{id}/);
 assert.match(rules, /driveFileId\.matches\('\^\[A-Za-z0-9_-\]\{20,100\}\$'\)/);
 assert.match(env, /^BLOB_READ_WRITE_TOKEN=$/m);
+assert.match(uploader, /5 \* 1024 \* 1024/, 'Le navigateur doit refuser les images de plus de 5 Mo.');
+assert.match(uploader, /setPreview\(currentUrl \|\| ''\)/, 'Un échec doit restaurer l’ancienne image.');
+for (const label of ['Image principale','Logotype','Image de la carte superposée','Image du cours','Image de l’événement','Logotype général']) assert.match(admin, new RegExp(label));
+assert.doesNotMatch(admin, /MediaUploader[^\n]+save(?:HomePage|Course|Event|SiteSettings)/, 'La mise en ligne ne doit pas enregistrer Firestore directement.');
 console.log('Médias vérifiés : token Firebase, admin vérifié, formats, taille, Blob serveur, Drive et règles.');
