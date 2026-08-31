@@ -3,6 +3,7 @@ import { Component, ErrorInfo, ReactNode } from 'react';
 interface Props { children: ReactNode }
 interface State { failed: boolean }
 export class AppErrorBoundary extends Component<Props, State> {
+  declare readonly props: Readonly<Props>;
   state: State = { failed: false };
   static getDerivedStateFromError(): State { return { failed: true }; }
   componentDidCatch(error: Error, info: ErrorInfo) { console.error('Erreur de rendu La Maloka', error.name, error.message, info.componentStack); }

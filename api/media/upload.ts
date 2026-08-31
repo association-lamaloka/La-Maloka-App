@@ -1,5 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { put } from '@vercel/blob';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const ALLOWED_IMAGE_TYPES = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp'], ['image/avif', 'avif']]);
@@ -26,10 +27,8 @@ export default async function handler(request: IncomingMessage, response: Server
     if (!contentLength || contentLength > maxBytes) return json(response, 413, { error: `Image trop volumineuse. Limite : ${maxBytes / 1024 / 1024} Mo.` });
     const body = await readBody(request, maxBytes);
     const pathname = safeBlobName(contentType);
-    const blobResponse = await fetch(`https://blob.vercel-storage.com/${pathname}`, { method: 'PUT', headers: { authorization: `Bearer ${blobToken}`, 'x-api-version': '7', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) }, body });
-    const blob = await blobResponse.json() as { url?: string; pathname?: string; error?: { message?: string } };
-    if (!blobResponse.ok || !blob.url) throw new Error(blob.error?.message || 'BLOB_UPLOAD_FAILED');
-    return json(response, 201, { url: blob.url, pathname: blob.pathname ?? pathname, contentType, size: body.length });
+    const blob = await put(pathname, body, { access: 'public', contentType, token: blobToken, addRandomSuffix: false });
+    return json(response, 201, { url: blob.url, pathname: blob.pathname, contentType, size: body.length });
   } catch (error) {
     if (error instanceof Error && error.message === 'FILE_TOO_LARGE') return json(response, 413, { error: 'Image trop volumineuse.' });
     return json(response, 500, { error: 'Échec de la mise en ligne vers Vercel Blob. Vérifiez la configuration de la Preview.' });
