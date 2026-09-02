@@ -12,10 +12,13 @@ assert.match(upload, /association\.lamaloka@gmail\.com/, 'Seul le compte officie
 assert.match(upload, /emailVerified === true/, 'Le courriel doit être vérifié.');
 for (const mime of ['image/jpeg','image/png','image/webp','image/avif']) assert.match(upload, new RegExp(mime.replace('/','\\/')));
 assert.match(upload, /BLOB_READ_WRITE_TOKEN/, 'Le secret Blob doit venir exclusivement de l’environnement serveur.');
-assert.match(upload, /import \{ put \} from '@vercel\/blob'/, 'Le endpoint doit utiliser le SDK officiel Vercel Blob.');
-assert.match(upload, /put\(pathname, body, \{ access: 'public', contentType, token: blobToken/, 'Le Buffer validé doit être envoyé au Blob public avec le token serveur.');
-assert.doesNotMatch(upload, /blob\.vercel-storage\.com/, 'Aucun appel REST Blob manuel ne doit subsister.');
-assert.match(upload, /withTimeout\(put\(/, 'Le SDK Blob ne doit pas pouvoir laisser la fonction sans réponse.');
+assert.doesNotMatch(upload, /@vercel\/blob/, 'Le endpoint ne doit dépendre d’aucun SDK Blob.');
+assert.match(upload, /blob\.vercel-storage\.com/, 'Le endpoint doit appeler directement l’API REST Blob.');
+assert.match(upload, /Authorization: `Bearer \$\{blobToken\}`/, 'Le token Blob doit être transmis côté serveur.');
+assert.match(upload, /'x-api-version': '7'/, 'La version 7 de l’API Blob est obligatoire.');
+assert.match(upload, /'x-content-type': contentType/, 'Le MIME validé doit accompagner le corps binaire.');
+assert.match(upload, /fetchWithTimeout\(`https:\/\/blob/, 'La requête Blob doit avoir un timeout serveur.');
+assert.match(upload, /console\.info\('Vercel Blob upload response'/, 'Le statut et le message Blob doivent être journalisés.');
 assert.match(upload, /UPSTREAM_TIMEOUT.*504/s, 'Un timeout serveur doit produire une réponse JSON 504.');
 assert.doesNotMatch(upload, /VITE_BLOB|NEXT_PUBLIC/, 'Le secret ne doit jamais être public.');
 assert.match(drive, /\^\[A-Za-z0-9_-\]\{20,100\}\$/, 'Le fileId Drive doit être strictement validé.');

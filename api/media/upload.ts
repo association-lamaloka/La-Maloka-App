@@ -1,6 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { put } from '@vercel/blob';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const ALLOWED_IMAGE_TYPES = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp'], ['image/avif', 'avif']]);
@@ -9,12 +8,14 @@ export const isAuthorizedAdmin = (user: { email?: string; emailVerified?: boolea
 
 const json = (response: ServerResponse, status: number, body: object) => { response.statusCode = status; response.setHeader('content-type', 'application/json'); response.end(JSON.stringify(body)); };
 const readBody = async (request: IncomingMessage, limit: number) => { const chunks: Buffer[] = []; let size = 0; for await (const chunk of request) { size += chunk.length; if (size > limit) throw new Error('FILE_TOO_LARGE'); chunks.push(chunk); } return Buffer.concat(chunks); };
-const withTimeout = async <T>(operation: Promise<T>, milliseconds = 25_000): Promise<T> => {
-  let timer: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('UPSTREAM_TIMEOUT')), milliseconds); });
-  try { return await Promise.race([operation, timeout]); }
-  finally { clearTimeout(timer!); }
+const fetchWithTimeout = async (url: string, init: RequestInit, milliseconds = 25_000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), milliseconds);
+  try { return await fetch(url, { ...init, signal: controller.signal }); }
+  catch (error) { if (error instanceof Error && error.name === 'AbortError') throw new Error('UPSTREAM_TIMEOUT'); throw error; }
+  finally { clearTimeout(timer); }
 };
+const blobPath = (pathname: string) => pathname.split('/').map(encodeURIComponent).join('/');
 
 export default async function handler(request: IncomingMessage, response: ServerResponse) {
   if (request.method !== 'POST') return json(response, 405, { error: 'Méthode non autorisée.' });
@@ -23,7 +24,7 @@ export default async function handler(request: IncomingMessage, response: Server
   const idToken = request.headers.authorization?.replace(/^Bearer\s+/i, '');
   if (!idToken) return json(response, 401, { error: 'Authentification Firebase requise.' });
   try {
-    const authResponse = await withTimeout(fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseConfig.apiKey}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ idToken }) }));
+    const authResponse = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseConfig.apiKey}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ idToken }) });
     const authData = await authResponse.json() as { users?: Array<{ email?: string; emailVerified?: boolean }> };
     if (!authResponse.ok || !authData.users?.[0] || !isAuthorizedAdmin(authData.users[0])) return json(response, 403, { error: 'Ce compte Google n’est pas autorisé à administrer La Maloka.' });
     const contentType = String(request.headers['content-type'] ?? '').split(';')[0];
@@ -33,8 +34,14 @@ export default async function handler(request: IncomingMessage, response: Server
     if (!contentLength || contentLength > maxBytes) return json(response, 413, { error: `Image trop volumineuse. Limite : ${maxBytes / 1024 / 1024} Mo.` });
     const body = await readBody(request, maxBytes);
     const pathname = safeBlobName(contentType);
-    const blob = await withTimeout(put(pathname, body, { access: 'public', contentType, token: blobToken, addRandomSuffix: false }));
-    return json(response, 201, { url: blob.url, pathname: blob.pathname, contentType, size: body.length });
+    const blobResponse = await fetchWithTimeout(`https://blob.vercel-storage.com/${blobPath(pathname)}`, { method: 'PUT', headers: { Authorization: `Bearer ${blobToken}`, 'x-api-version': '7', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) }, body });
+    const responseText = await blobResponse.text();
+    let blob: { url?: string; pathname?: string; message?: string; error?: string | { message?: string } } = {};
+    try { blob = responseText ? JSON.parse(responseText) : {}; } catch { blob = { message: responseText.slice(0, 500) }; }
+    const blobMessage = typeof blob.error === 'string' ? blob.error : blob.error?.message || blob.message || (blobResponse.ok ? 'Upload completed.' : 'Unknown Blob error.');
+    console.info('Vercel Blob upload response', { status: blobResponse.status, message: blobMessage });
+    if (!blobResponse.ok || !blob.url) throw new Error('BLOB_UPLOAD_FAILED');
+    return json(response, 201, { url: blob.url, pathname: blob.pathname || pathname, contentType, size: body.length });
   } catch (error) {
     if (error instanceof Error && error.message === 'FILE_TOO_LARGE') return json(response, 413, { error: 'Image trop volumineuse.' });
     if (error instanceof Error && error.message === 'UPSTREAM_TIMEOUT') return json(response, 504, { error: 'Le service de stockage ne répond pas. Réessayez dans quelques instants.' });
