@@ -30,9 +30,9 @@ export default async function handler(request: IncomingMessage, response: Server
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), BLOB_UPLOAD_TIMEOUT_MS);
     try {
-      const blobResponse = await fetch(`https://blob.vercel-storage.com/${pathname}`, {
+      const blobResponse = await fetch(`https://blob.vercel-storage.com/?pathname=${encodeURIComponent(pathname)}`, {
         method: 'PUT',
-        headers: { authorization: `Bearer ${blobToken}`, 'x-api-version': '7', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) },
+        headers: { Authorization: `Bearer ${blobToken}`, 'x-api-version': '12', 'x-vercel-blob-access': 'public', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) },
         body,
         signal: controller.signal,
       });
