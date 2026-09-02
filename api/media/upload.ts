@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const ALLOWED_IMAGE_TYPES = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp'], ['image/avif', 'avif']]);
+const BLOB_UPLOAD_TIMEOUT_MS = 25_000;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const safeBlobName = (contentType: string) => `la-maloka/${new Date().toISOString().slice(0, 10)}/${randomUUID()}.${ALLOWED_IMAGE_TYPES.get(contentType)}`;
 export const isAuthorizedAdmin = (user: { email?: string; emailVerified?: boolean }) => user.email === 'association.lamaloka@gmail.com' && user.emailVerified === true;
 
@@ -21,17 +23,38 @@ export default async function handler(request: IncomingMessage, response: Server
     if (!authResponse.ok || !authData.users?.[0] || !isAuthorizedAdmin(authData.users[0])) return json(response, 403, { error: 'Ce compte Google n’est pas autorisé à administrer La Maloka.' });
     const contentType = String(request.headers['content-type'] ?? '').split(';')[0];
     if (!ALLOWED_IMAGE_TYPES.has(contentType)) return json(response, 415, { error: 'Format refusé. Utilisez JPEG, PNG, WebP ou AVIF.' });
-    const maxBytes = Number(process.env.BLOB_MAX_FILE_SIZE_MB || 5) * 1024 * 1024;
     const contentLength = Number(request.headers['content-length'] || 0);
-    if (!contentLength || contentLength > maxBytes) return json(response, 413, { error: `Image trop volumineuse. Limite : ${maxBytes / 1024 / 1024} Mo.` });
-    const body = await readBody(request, maxBytes);
+    if (!contentLength || contentLength > MAX_IMAGE_BYTES) return json(response, 413, { error: 'Image trop volumineuse. Limite : 5 Mo.' });
+    const body = await readBody(request, MAX_IMAGE_BYTES);
     const pathname = safeBlobName(contentType);
-    const blobResponse = await fetch(`https://blob.vercel-storage.com/${pathname}`, { method: 'PUT', headers: { authorization: `Bearer ${blobToken}`, 'x-api-version': '7', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) }, body });
-    const blob = await blobResponse.json() as { url?: string; pathname?: string; error?: { message?: string } };
-    if (!blobResponse.ok || !blob.url) throw new Error(blob.error?.message || 'BLOB_UPLOAD_FAILED');
-    return json(response, 201, { url: blob.url, pathname: blob.pathname ?? pathname, contentType, size: body.length });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), BLOB_UPLOAD_TIMEOUT_MS);
+    try {
+      const blobResponse = await fetch(`https://blob.vercel-storage.com/${pathname}`, {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${blobToken}`, 'x-api-version': '7', 'content-type': contentType, 'x-content-type': contentType, 'content-length': String(body.length) },
+        body,
+        signal: controller.signal,
+      });
+      const responseText = await blobResponse.text();
+      let blob: { url?: string; pathname?: string; error?: { message?: string } | string } = {};
+      try { blob = JSON.parse(responseText); } catch { blob = {}; }
+      if (!blobResponse.ok || !blob.url) {
+        const blobError = typeof blob.error === 'string' ? blob.error : blob.error?.message;
+        console.error('Vercel Blob upload failed', { status: blobResponse.status, pathname, error: blobError || responseText || 'Empty response' });
+        return json(response, 502, { error: 'Échec de la mise en ligne vers Vercel Blob. Vérifiez la configuration de la Preview.' });
+      }
+      return json(response, 201, { url: blob.url, pathname: blob.pathname ?? pathname, contentType, size: body.length });
+    } catch (error) {
+      console.error('Vercel Blob upload request failed', { pathname, error: error instanceof Error ? error.message : String(error) });
+      if (controller.signal.aborted) return json(response, 504, { error: 'La mise en ligne vers Vercel Blob a dépassé 25 secondes.' });
+      return json(response, 502, { error: 'Échec de la mise en ligne vers Vercel Blob. Vérifiez la configuration de la Preview.' });
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch (error) {
     if (error instanceof Error && error.message === 'FILE_TOO_LARGE') return json(response, 413, { error: 'Image trop volumineuse.' });
+    console.error('Media upload failed', { error: error instanceof Error ? error.message : String(error) });
     return json(response, 500, { error: 'Échec de la mise en ligne vers Vercel Blob. Vérifiez la configuration de la Preview.' });
   }
 }
