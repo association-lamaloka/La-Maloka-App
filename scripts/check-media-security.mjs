@@ -15,6 +15,8 @@ assert.match(upload, /BLOB_READ_WRITE_TOKEN/, 'Le secret Blob doit venir exclusi
 assert.match(upload, /import \{ put \} from '@vercel\/blob'/, 'Le endpoint doit utiliser le SDK officiel Vercel Blob.');
 assert.match(upload, /put\(pathname, body, \{ access: 'public', contentType, token: blobToken/, 'Le Buffer validé doit être envoyé au Blob public avec le token serveur.');
 assert.doesNotMatch(upload, /blob\.vercel-storage\.com/, 'Aucun appel REST Blob manuel ne doit subsister.');
+assert.match(upload, /withTimeout\(put\(/, 'Le SDK Blob ne doit pas pouvoir laisser la fonction sans réponse.');
+assert.match(upload, /UPSTREAM_TIMEOUT.*504/s, 'Un timeout serveur doit produire une réponse JSON 504.');
 assert.doesNotMatch(upload, /VITE_BLOB|NEXT_PUBLIC/, 'Le secret ne doit jamais être public.');
 assert.match(drive, /\^\[A-Za-z0-9_-\]\{20,100\}\$/, 'Le fileId Drive doit être strictement validé.');
 assert.match(rules, /match \/navigation\/{id}/);
