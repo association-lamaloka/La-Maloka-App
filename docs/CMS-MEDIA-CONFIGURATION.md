@@ -5,10 +5,10 @@
 1. Dans le projet Vercel, ouvrir **Storage** puis **Create Database**.
 2. Choisir **Blob**, créer un store public et le relier au projet.
 3. Vérifier dans **Settings → Environment Variables** que `BLOB_READ_WRITE_TOKEN` est disponible pour **Preview** (et seulement plus tard pour Production après validation).
-4. Ajouter facultativement `BLOB_MAX_FILE_SIZE_MB=5`.
+4. La limite de 5 Mo est fixée par le endpoint d’autorisation; aucune variable publique supplémentaire n’est nécessaire.
 5. Redéployer uniquement la Preview de la pull request.
 
-Le token reste côté serveur. `/api/media/upload` valide d'abord le Firebase ID token, le compte Google officiel vérifié, le type MIME et la taille avant de contacter Blob.
+Le token permanent reste côté serveur. Le navigateur demande une autorisation temporaire à `/api/media/client-upload`, qui valide d'abord le Firebase ID token, le compte Google officiel vérifié, le type MIME, la taille et le préfixe `la-maloka/`. Le fichier est ensuite envoyé directement du navigateur vers Blob : son contenu binaire ne traverse jamais la fonction Vercel.
 
 ## Google Drive pour la galerie
 
