@@ -149,6 +149,7 @@ function MediaForm({ kind, value, save, cancel }: { kind: 'photo' | 'video'; val
     }
   };
   return <form onSubmit={submit} className="grid gap-3 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-900 md:grid-cols-2">
+    {kind === 'photo' && <div className="md:col-span-2"><MediaUploader label="Photo de la galerie" currentUrl={url} onUploaded={({ url: uploadedUrl }) => { setUrl(uploadedUrl); setF((current) => ({ ...current, url: uploadedUrl, driveFileId: '' } as PhotoItem)); setDriveLink(''); setValidation('Photo mise en ligne. Cliquez sur « Enregistrer » pour la publier.'); }} /></div>}
     <Field label="Titre" value={f.title} onChange={(title) => setF({ ...f, title })} />
     <Field label={kind === 'video' ? 'URL YouTube' : 'URL HTTPS publique alternative'} type="url" value={url} onChange={setUrl} />
     {kind === 'photo' && <div className="md:col-span-2"><Field label="Lien partagé Google Drive" required={false} value={driveLink} onChange={setDriveLink} /><button type="button" onClick={() => void checkDrive()} className="mt-2 rounded-xl border px-4 py-2">Vérifier le partage Drive</button></div>}
