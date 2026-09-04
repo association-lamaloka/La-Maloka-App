@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseConfig from '../../firebase-applet-config.json' with { type: 'json' };
 
 const ADMIN_EMAIL = 'association.lamaloka@gmail.com';
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
