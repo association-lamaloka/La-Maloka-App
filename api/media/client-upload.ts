@@ -18,7 +18,19 @@ const json = (response: ServerResponse, status: number, body: object) => {
   response.end(JSON.stringify(body));
 };
 
-const readJsonBody = async (request: IncomingMessage) => {
+type VercelRequest = IncomingMessage & { body?: unknown };
+
+const readJsonBody = async (request: VercelRequest) => {
+  if (request.body !== undefined) {
+    if (typeof request.body === 'string') {
+      return JSON.parse(request.body) as HandleUploadBody;
+    }
+    if (request.body !== null && typeof request.body === 'object') {
+      return request.body as HandleUploadBody;
+    }
+    throw new Error('INVALID_REQUEST_BODY');
+  }
+
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of request) {
@@ -26,7 +38,9 @@ const readJsonBody = async (request: IncomingMessage) => {
     if (size > 64 * 1024) throw new Error('REQUEST_TOO_LARGE');
     chunks.push(chunk);
   }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as HandleUploadBody;
+  const rawBody = Buffer.concat(chunks).toString('utf8');
+  if (!rawBody) throw new Error('EMPTY_REQUEST_BODY');
+  return JSON.parse(rawBody) as HandleUploadBody;
 };
 
 const verifyAdmin = async (idToken: string): Promise<FirebaseAccount> => {
@@ -50,11 +64,17 @@ const verifyAdmin = async (idToken: string): Promise<FirebaseAccount> => {
 export default async function handler(request: IncomingMessage, response: ServerResponse) {
   if (request.method !== 'POST') return json(response, 405, { error: 'Méthode non autorisée.' });
 
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!blobToken) {
+    return json(response, 503, { error: 'BLOB_READ_WRITE_TOKEN absent de ce déploiement.' });
+  }
+
   try {
-    const body = await readJsonBody(request);
+    const body = await readJsonBody(request as VercelRequest);
     const result = await handleUpload({
       body,
       request,
+      token: blobToken,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         if (!VALID_PATHNAME.test(pathname)) throw new Error('INVALID_PATHNAME');
         await verifyAdmin(clientPayload ?? '');
