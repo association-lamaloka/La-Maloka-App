@@ -1,8 +1,10 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
+import { upload as uploadToBlob } from '@vercel/blob/client';
 import { auth } from '../firebase';
 
 interface UploadedMedia { url: string; pathname: string; contentType: string; size: number }
+const extensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' };
 export function MediaUploader({ label, currentUrl, onUploaded }: { label: string; currentUrl?: string; onUploaded: (media: UploadedMedia) => void }) {
   const [preview, setPreview] = useState(currentUrl || '');
   const [progress, setProgress] = useState(0);
@@ -19,12 +21,16 @@ export function MediaUploader({ label, currentUrl, onUploaded }: { label: string
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error('AUTH_REQUIRED');
-      const result = await new Promise<UploadedMedia>((resolve, reject) => {
-        const xhr = new XMLHttpRequest(); xhr.open('POST', '/api/media/upload'); xhr.setRequestHeader('Authorization', `Bearer ${token}`); xhr.setRequestHeader('Content-Type', file.type);
-        xhr.upload.onprogress = (event) => event.lengthComputable && setProgress(Math.round(event.loaded / event.total * 100));
-        xhr.onload = () => { const data = JSON.parse(xhr.responseText || '{}'); xhr.status >= 200 && xhr.status < 300 ? resolve(data) : reject(new Error(data.error || 'UPLOAD_FAILED')); }; xhr.onerror = () => reject(new Error('NETWORK_ERROR')); xhr.send(file);
+      const date = new Date().toISOString().slice(0, 10);
+      const pathname = `la-maloka/${date}/${crypto.randomUUID()}.${extensions[file.type]}`;
+      const blob = await uploadToBlob(pathname, file, {
+        access: 'public',
+        handleUploadUrl: '/api/media/client-upload',
+        clientPayload: token,
+        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
       });
-      setPreview(result.url); setProgress(100); setStatus('Image mise en ligne avec succès. Elle sera enregistrée uniquement après avoir cliqué sur « Enregistrer ».'); onUploaded(result);
+      const result = { url: blob.url, pathname: blob.pathname, contentType: file.type, size: file.size };
+      setPreview(blob.url); setProgress(100); setStatus('Image mise en ligne avec succès. Elle sera enregistrée uniquement après avoir cliqué sur « Enregistrer ».'); onUploaded(result);
     } catch (error) { setPreview(currentUrl || ''); setProgress(0); setStatus(error instanceof Error && error.message !== 'UPLOAD_FAILED' ? error.message : 'Vercel Blob n’est pas configuré ou la mise en ligne a échoué. Configurez BLOB_READ_WRITE_TOKEN pour cette Preview.'); }
     finally { URL.revokeObjectURL(localPreview); previewUrl.current = null; }
   };
