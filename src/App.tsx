@@ -76,20 +76,30 @@ export default function App() {
       'maloka_admin_password',
       'maloka_sheets_secret_token',
       'maloka_sheets_webhook_url',
-      'maloka_site_settings',
     ].forEach((key) => localStorage.removeItem(key));
 
-    const unsubscribeSettings = subscribeSiteSettings((value) => { setSettings(value); setContentLoading(false); }, () => { setContentError('Le contenu distant est indisponible. Les valeurs initiales sûres sont affichées.'); setContentLoading(false); });
-    const unsubscribeGallery = subscribeGallery(setPhotos);
-    const unsubscribeCourses = subscribeCourses(setCourses);
-    const unsubscribeVideos = subscribeVideos(setVideos);
-    const unsubscribeRegistration = subscribeRegistrationProcess(setRegistration);
-    const unsubscribeTerms = subscribeMembershipTerms(setTerms);
-    const unsubscribeNavigation = subscribeNavigation(setNavigation);
-    const unsubscribeEvents = subscribeEvents(setEvents);
-    const unsubscribeHome = subscribeHomePage(setHomePage);
-    const unsubscribeFooter = subscribeFooter(setFooterContent);
+    // Reset privileged drafts when the identity changes, then wait for every source.
+    setHomePage(DEFAULT_HOME_PAGE); setFooterContent(DEFAULT_FOOTER);
+    setPhotos([]); setVideos([]); setCourses([]); setEvents([]);
+    setContentLoading(true); setContentError('');
+    let active = true;
+    const pending = new Set(['configuration','photos','cours','vidéos','inscription','conditions','navigation','agenda','accueil','footer']);
+    const errors = new Map<string,string>();
+    const report = () => { if (active) { setContentLoading(pending.size > 0); setContentError([...errors.values()].join(' ')); } };
+    const received = <T,>(name: string, update: (value:T) => void) => (value:T) => { if (!active) return; update(value); pending.delete(name); errors.delete(name); report(); };
+    const failed = (name: string) => (error: Error) => { if (!active) return; pending.delete(name); errors.set(name,`Lecture impossible : ${name}. Vos données n’ont pas été remplacées.`); report(); };
+    const unsubscribeSettings = subscribeSiteSettings(received('configuration',setSettings), failed('configuration'));
+    const unsubscribeGallery = subscribeGallery(received('photos',setPhotos), failed('photos'));
+    const unsubscribeCourses = subscribeCourses(received('cours',setCourses), failed('cours'));
+    const unsubscribeVideos = subscribeVideos(received('vidéos',setVideos), failed('vidéos'));
+    const unsubscribeRegistration = subscribeRegistrationProcess(received('inscription',setRegistration), failed('inscription'));
+    const unsubscribeTerms = subscribeMembershipTerms(received('conditions',setTerms), failed('conditions'));
+    const unsubscribeNavigation = subscribeNavigation(received('navigation',setNavigation), failed('navigation'));
+    const unsubscribeEvents = subscribeEvents(received('agenda',setEvents), failed('agenda'));
+    const unsubscribeHome = subscribeHomePage(received('accueil',setHomePage), failed('accueil'));
+    const unsubscribeFooter = subscribeFooter(received('footer',setFooterContent), failed('footer'));
     return () => {
+      active = false;
       unsubscribeSettings();
       unsubscribeGallery();
       unsubscribeCourses();
@@ -101,7 +111,7 @@ export default function App() {
       unsubscribeHome();
       unsubscribeFooter();
     };
-  }, []);
+  }, [adminUser?.uid]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -141,7 +151,7 @@ export default function App() {
         {view === 'galerie' && <LandingContent section="galerie" pageTitle={settings.galleryPageTitle} pageSubtitle={settings.galleryPageSubtitle} photos={photos} videos={videos} />}
         {view === 'conditions' && <LandingContent section="conditions" terms={terms} onBack={() => navigate('cours')} />}
         {view === 'administration' && (
-          <SimpleAdmin settings={settings} homePage={homePage} footerContent={footerContent} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} onAuthorized={setAdminUser} />
+          <SimpleAdmin settings={settings} homePage={homePage} footerContent={footerContent} navigation={navigation} courses={courses} events={events} photos={photos} videos={videos} registration={registration} terms={terms} user={adminUser} authLoading={authLoading} authError={authError} contentError={contentLoading ? 'Chargement en cours' : contentError} onAuthorized={setAdminUser} />
         )}
       </main>
 

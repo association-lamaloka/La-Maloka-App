@@ -5,7 +5,7 @@ import firebaseConfig from '../../firebase-applet-config.json' with { type: 'jso
 const ADMIN_EMAIL = 'association.lamaloka@gmail.com';
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const VALID_PATHNAME = /^la-maloka\/[0-9]{4}-[0-9]{2}-[0-9]{2}\/[a-f0-9-]+\.(?:jpg|png|webp|avif)$/;
+const VALID_PATHNAME = /^la-maloka\/[0-9]{4}-[0-9]{2}-[0-9]{2}\/[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.(?:jpg|png|webp|avif)$/;
 
 interface FirebaseAccount {
   email?: string;
@@ -20,8 +20,9 @@ const json = (response: ServerResponse, status: number, body: object) => {
 
 type VercelRequest = IncomingMessage & { body?: unknown };
 
-const readJsonBody = async (request: VercelRequest) => {
+export const readJsonBody = async (request: VercelRequest) => {
   if (request.body !== undefined) {
+    if (Buffer.byteLength(typeof request.body === 'string' ? request.body : JSON.stringify(request.body)) > 64 * 1024) throw new Error('REQUEST_TOO_LARGE');
     if (typeof request.body === 'string') {
       return JSON.parse(request.body) as HandleUploadBody;
     }
@@ -43,7 +44,7 @@ const readJsonBody = async (request: VercelRequest) => {
   return JSON.parse(rawBody) as HandleUploadBody;
 };
 
-const verifyAdmin = async (idToken: string): Promise<FirebaseAccount> => {
+export const verifyAdmin = async (idToken: string): Promise<FirebaseAccount> => {
   if (!idToken || idToken.length > 10_000) throw new Error('AUTH_REQUIRED');
   const authResponse = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${firebaseConfig.apiKey}`,
@@ -61,6 +62,17 @@ const verifyAdmin = async (idToken: string): Promise<FirebaseAccount> => {
   return user;
 };
 
+export const authorizeImageUpload = async (pathname: string, clientPayload: string | null) => {
+  if (!VALID_PATHNAME.test(pathname)) throw new Error('INVALID_PATHNAME');
+  await verifyAdmin(clientPayload ?? '');
+  return {
+    allowedContentTypes: ALLOWED_IMAGE_TYPES,
+    maximumSizeInBytes: MAX_IMAGE_SIZE,
+    allowOverwrite: false,
+    tokenPayload: JSON.stringify({ admin: ADMIN_EMAIL }),
+  };
+};
+
 export default async function handler(request: IncomingMessage, response: ServerResponse) {
   if (request.method !== 'POST') return json(response, 405, { error: 'Méthode non autorisée.' });
 
@@ -75,15 +87,7 @@ export default async function handler(request: IncomingMessage, response: Server
       body,
       request,
       token: blobToken,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        if (!VALID_PATHNAME.test(pathname)) throw new Error('INVALID_PATHNAME');
-        await verifyAdmin(clientPayload ?? '');
-        return {
-          allowedContentTypes: ALLOWED_IMAGE_TYPES,
-          maximumSizeInBytes: MAX_IMAGE_SIZE,
-          tokenPayload: JSON.stringify({ admin: ADMIN_EMAIL }),
-        };
-      },
+      onBeforeGenerateToken: authorizeImageUpload,
       onUploadCompleted: async () => {
         // The CMS keeps publication explicit: Firestore is updated only when
         // the administrator clicks “Enregistrer”.

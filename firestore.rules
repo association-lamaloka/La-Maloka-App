@@ -13,7 +13,7 @@ service cloud.firestore {
     match /site_settings/{id} {
       allow read: if true;
       allow create, update: if isAdmin() && noPassword()
-        && request.resource.data.keys().hasOnly(['associationName','tagline','logoUrl','heroHeadline','heroSubheadline','heroImage','contactEmail','contactPhone','facebookUrl','instagramUrl','youtubeUrl','locationFontenay','locationLaQueue','season','footerLegalText','copyrightText','coursesPageTitle','coursesPageSubtitle','agendaPageTitle','agendaPageSubtitle','galleryPageTitle','galleryPageSubtitle','bannerText','bannerVisible','heroPrimaryButtonText','heroSecondaryButtonText','updatedAt'])
+        && request.resource.data.keys().hasOnly(['associationName','tagline','logoUrl','heroHeadline','heroSubheadline','heroImage','contactEmail','contactPhone','facebookUrl','instagramUrl','youtubeUrl','locationFontenay','locationLaQueue','season','footerLegalText','copyrightText','coursesPageTitle','coursesPageSubtitle','agendaPageTitle','agendaPageSubtitle','galleryPageTitle','galleryPageSubtitle','bannerText','bannerVisible','heroPrimaryButtonText','heroSecondaryButtonText','associationStory','contactPerson','contactHours','postalAddress','contactWhatsApp','vignettes','registrationInfo','moduleToggles','updatedAt'])
         && request.resource.data.associationName is string && request.resource.data.associationName.size() <= 120
         && request.resource.data.tagline is string && request.resource.data.tagline.size() <= 200
         && request.resource.data.heroHeadline is string && request.resource.data.heroHeadline.size() <= 160
@@ -35,6 +35,9 @@ service cloud.firestore {
         && request.resource.data.bannerVisible is bool
         && request.resource.data.heroPrimaryButtonText is string && request.resource.data.heroPrimaryButtonText.size() <= 100
         && request.resource.data.heroSecondaryButtonText is string && request.resource.data.heroSecondaryButtonText.size() <= 100
+        && (!('vignettes' in request.resource.data) || (request.resource.data.vignettes is list && request.resource.data.vignettes.size() <= 20))
+        && (!('registrationInfo' in request.resource.data) || request.resource.data.registrationInfo is map)
+        && (!('moduleToggles' in request.resource.data) || request.resource.data.moduleToggles is map)
         && optionalHttps('logoUrl') && optionalHttps('heroImage') && optionalHttps('facebookUrl')
         && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl');
       allow delete: if isAdmin();
@@ -51,7 +54,7 @@ service cloud.firestore {
         && request.resource.data.instructor is string && request.resource.data.instructor.size() <= 120
         && request.resource.data.schedule is string && request.resource.data.schedule.size() <= 160
         && request.resource.data.location is string && request.resource.data.location.size() <= 180
-        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && request.resource.data.image is string && (request.resource.data.image == '' || request.resource.data.image.matches('https://.*'))
         && request.resource.data.season is string && request.resource.data.season.size() <= 80
         && request.resource.data.priceMonthly is number && request.resource.data.priceMonthly >= 0
         && request.resource.data.annualPrice is number && request.resource.data.annualPrice >= 0
@@ -86,7 +89,7 @@ service cloud.firestore {
         && request.resource.data.location is string && request.resource.data.location.size() <= 200
         && request.resource.data.description is string && request.resource.data.description.size() <= 2000
         && request.resource.data.price is number && request.resource.data.price >= 0
-        && request.resource.data.image is string && request.resource.data.image.matches('https://.*')
+        && request.resource.data.image is string && (request.resource.data.image == '' || request.resource.data.image.matches('https://.*'))
         && optionalHttps('externalUrl') && request.resource.data.active is bool && validOrder(request.resource.data.order);
       allow delete: if isAdmin();
     }
@@ -108,9 +111,9 @@ service cloud.firestore {
             && request.resource.data.headline is string && request.resource.data.headline.size() <= 180
             && request.resource.data.highlight is string && request.resource.data.highlight.size() <= 120
             && request.resource.data.description is string && request.resource.data.description.size() <= 1200
-            && request.resource.data.heroImageUrl is string && request.resource.data.heroImageUrl.matches('https://.*')
+            && request.resource.data.heroImageUrl is string && (request.resource.data.heroImageUrl == '' || request.resource.data.heroImageUrl.matches('https://.*'))
             && request.resource.data.logoUrl is string && (request.resource.data.logoUrl == '' || request.resource.data.logoUrl.matches('https://.*'))
-            && request.resource.data.overlayImageUrl is string && request.resource.data.overlayImageUrl.matches('https://.*')
+            && request.resource.data.overlayImageUrl is string && (request.resource.data.overlayImageUrl == '' || request.resource.data.overlayImageUrl.matches('https://.*'))
             && request.resource.data.bannerButtonDestination in ['cours','agenda']
             && request.resource.data.primaryButtonDestination in ['cours','agenda']
             && request.resource.data.secondaryButtonDestination in ['cours','agenda']
@@ -135,9 +138,11 @@ service cloud.firestore {
     match /videos/{id} {
       allow read: if resource.data.active == true || isAdmin();
       allow create, update: if isAdmin() && noPassword()
-        && request.resource.data.keys().hasOnly(['id','title','youtubeId','description','date','active','order'])
+        && request.resource.data.keys().hasOnly(['id','title','youtubeId','youtubeUrl','category','description','date','active','order'])
         && request.resource.data.id == id
         && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && optionalHttps('youtubeUrl')
+        && (!('category' in request.resource.data) || (request.resource.data.category is string && request.resource.data.category.size() <= 80))
         && request.resource.data.youtubeId is string && request.resource.data.youtubeId.matches('^[A-Za-z0-9_-]{11}$')
         && request.resource.data.description is string && request.resource.data.description.size() <= 1000
         && request.resource.data.date is string && request.resource.data.date.size() <= 20
