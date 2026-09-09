@@ -1,0 +1,240 @@
+{
+  "pricingPlans": [
+    {
+      "id": "price-cardio-lqy-mardi-20h",
+      "day": "Mardi",
+      "discipline": "Cardio Latino",
+      "time": "20h",
+      "level": "Tous niveaux",
+      "location": "La Queue lez Yvelines",
+      "room": "Salle Jeanne d'Arc",
+      "duration": "Durée : 1h",
+      "price": 210,
+      "period": "par personne",
+      "notes": "Cours complet de Cardio Latino, renforcement musculaire et ambiance festive.",
+      "badge": "La Queue-lez-Yvelines",
+      "active": true,
+      "classId": "c-cardio-lqy-20h-2026",
+      "helloAssoUrl": "https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-tous-niveaux-saison-2026-2027-cours-a-20h-la-queue-lez-yvelines"
+    },
+    {
+      "id": "price-cardio-flf-jeudi-20h",
+      "day": "Jeudi",
+      "discipline": "Cardio Latino",
+      "time": "20h",
+      "level": "Tous niveaux",
+      "location": "Fontenay le Fleury",
+      "room": "Salle \"Le Studio\" - Mairie",
+      "duration": "Durée : 1h",
+      "price": 198,
+      "period": "par personne",
+      "notes": "Session dynamique cardio-danse latino à Fontenay-le-Fleury.",
+      "badge": "Fontenay-le-Fleury",
+      "active": true,
+      "classId": "c-cardio-flf-20h-2026",
+      "helloAssoUrl": "https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-20h-tous-niveaux-saison-2026-2027-fontenay-le-fleury"
+    },
+    {
+      "id": "price-cardio-flf-jeudi-21h",
+      "day": "Jeudi",
+      "discipline": "Cardio Latino",
+      "time": "21h",
+      "level": "Tous niveaux",
+      "location": "Fontenay le Fleury",
+      "room": "Salle \"Le Studio\" - Mairie",
+      "duration": "Durée : 1h",
+      "price": 198,
+      "period": "par personne",
+      "notes": "Deuxième créneau Cardio Latino pour s'adapter à tous les emplois du temps.",
+      "badge": "Fontenay-le-Fleury",
+      "active": true,
+      "classId": "c-cardio-flf-21h-2026",
+      "helloAssoUrl": "https://www.helloasso.com/associations/la-maloka/adhesions/cardio-latino-cours-de-21h-tous-niveaux-saison-2026-2027-fontenay-le-fleury"
+    },
+    {
+      "id": "price-salsa-flf-vendredi-20h",
+      "day": "Vendredi",
+      "discipline": "Salsa Cubaine",
+      "time": "20h",
+      "level": "Débutants",
+      "location": "Fontenay le Fleury",
+      "room": "Salle \"Le Studio\" - Mairie",
+      "duration": "Durée : 1h",
+      "price": 198,
+      "period": "par personne",
+      "notes": "Apprentissage des bases du guidage cubain, pasitos, clave et rueda de casino.",
+      "badge": "Idéal Débutants",
+      "active": true,
+      "classId": "c-salsa-flf-20h-2026",
+      "helloAssoUrl": "https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-debutant-saison-2026-2027-cours-a-20h-fontenay-le-fleury"
+    },
+    {
+      "id": "price-salsa-flf-vendredi-21h",
+      "day": "Vendredi",
+      "discipline": "Salsa Cubaine",
+      "time": "21h",
+      "level": "Intermédiaires & Confirmés",
+      "location": "Fontenay le Fleury",
+      "room": "Salle \"Le Studio\" - Mairie",
+      "duration": "Durée : 1h",
+      "price": 198,
+      "period": "par personne",
+      "notes": "Figures complexes, styling, musicalité, shines et ruedas avec Yasmilka Valdés.",
+      "badge": "Perfectionnement",
+      "active": true,
+      "classId": "c-salsa-flf-21h-2026",
+      "helloAssoUrl": "https://www.helloasso.com/associations/la-maloka/adhesions/salsa-cubaine-inter-avance-saison-2026-2027-cours-a-21h-fontenay-le-fleury-2"
+    }
+  ],
+  "tagline": "Association de Danses latines • Salsa Cubaine & Cardio Latino",
+  "moduleToggles": {
+    "allowOnlineRegistrations": false,
+    "showHealthForm": false,
+    "showEventsCalendar": true,
+    "showPhotoGallery": true,
+    "showRegistrationBanner": true
+  },
+  "locationLaQueue": "Salle le Studio Place du 8 mai 1945, 78340 Fontenay le Fleury",
+  "facebookUrl": "https://facebook.com/lamaloka78",
+  "youtubeUrl": "https://youtube.com/@lamalokadanse",
+  "heroImage": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1000",
+  "associationStory": "Fondée par des passionnés de culture caribéenne, l'Association La Maloka a pour mission de faire rayonner la danse, la musique et le bien-être à Fontenay-le-Fleury et La Queue-les-Yvelines. Notre pédagogie est axée sur la convivialité, le plaisir du mouvement et l'accessibilité à tous.",
+  "updatedAt": "2026-08-29T12:01:25.597Z",
+  "vignettes": [
+    {
+      "id": "salsa-cubaine",
+      "title": "Salsa Cubaine & Rueda de Casino",
+      "subtitle": "Danse de couple, rythme afro-cubain & esprit collectif",
+      "badge": "Danse de Couple & Cercle",
+      "description": "Plongez dans l'authenticité cubaine ! Apprenez le pas de base, les tours fluides, le guidage naturel et participez à la célèbre Rueda de Casino où l'on échange les partenaires dans une ambiance survoltée.",
+      "image": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=800",
+      "accentColor": "orange",
+      "scheduleSummary": "Vendredi soir (Fontenay-le-Fleury)",
+      "locationSummary": "Fontenay-le-Fleury",
+      "keyPoints": [
+        "Accessible débutants et intermédiaires",
+        "Apprentissage de la Rueda de Casino (cercle festif)",
+        "Technique de guidage, musicalité et style",
+        "Partenaire non obligatoire pour l'inscription"
+      ],
+      "active": true
+    },
+    {
+      "id": "cardio-latino",
+      "title": "Cardio Latino",
+      "subtitle": "Fitness chorégraphié, vitalité & musiques du soleil",
+      "badge": "Danse Solo & Fitness Tropical",
+      "description": "Dépensez-vous avec le sourire ! Un cours sans partenaire alliant mouvements de fitness et pas de danses latines (merengue, cumbia, salsa, reggaeton). Idéal pour tonifier le corps, développer le souffle et évacuer le stress.",
+      "image": "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=800",
+      "accentColor": "emerald",
+      "scheduleSummary": "Mardi (La Queue-les-Yvelines) & Jeudi (Fontenay)",
+      "locationSummary": "Fontenay-le-Fleury & La Queue-les-Yvelines",
+      "keyPoints": [
+        "Aucun prérequis en danse nécessaire",
+        "Brûle des calories et tonifie la silhouette",
+        "Rythmes latins ultra-dynamiques et entraînants",
+        "Atmosphère bienveillante et festive"
+      ],
+      "active": true
+    }
+  ],
+  "heroHeadline": "La Danse et le Rythme se Vivent à La Maloka",
+  "generalConditions": {
+    "title": "Conditions Générales d'Inscription & Règlement Intérieur",
+    "subtitle": "Association La Maloka (Loi 1901) - Fontenay-le-Fleury & La Queue-lez-Yvelines",
+    "lastUpdated": "Saison 2026 - 2027",
+    "sections": [
+      {
+        "id": "art-1-adhesion",
+        "title": "Article 1 : Adhésion & Inscription Annuelle",
+        "content": "L'inscription aux cours réguliers de La Maloka implique l'adhésion formelle à l'association (loi du 1er juillet 1901). La cotisation annuelle donne accès aux cours réguliers hebdomadaires choisis pour l'ensemble de la saison sportive (hors vacances scolaires et jours fériés). Toute inscription est nominative et incessible."
+      },
+      {
+        "id": "art-2-tarifs-reglement",
+        "title": "Article 2 : Tarifs & Modalités de Paiement",
+        "content": "Les tarifs sont fixés annuellement par le bureau de l'association : 210 € par personne pour les cours de La Queue-lez-Yvelines et 198 € par personne pour les cours de Fontenay-le-Fleury. Le règlement peut être effectué en ligne via HelloAsso (CB sécurisée), par chèque (possibilité de paiement en 3 fois sans frais à l'inscription), par virement ou en espèces. L'inscription est définitive après validation du paiement."
+      },
+      {
+        "id": "art-3-cours-essai",
+        "title": "Article 3 : Cours d'Essai Gratuit",
+        "content": "Un cours d'essai gratuit et sans engagement est proposé aux nouveaux arrivants en début de saison lors de la séance inaugurale de septembre. L'élève dispose d'un délai de 7 jours après son essai pour confirmer et finaliser son inscription."
+      },
+      {
+        "id": "art-4-sante-certificat",
+        "title": "Article 4 : Aptitude Physique & Questionnaire de Santé",
+        "content": "L'adhérent atteste être apte à la pratique de la danse et des activités cardio-vasculaires. Un questionnaire de santé (QS-Sport) ou un certificat médical de non-contre-indication à la pratique de la danse sportive de moins de 3 ans doit être renseigné lors de l'inscription."
+      },
+      {
+        "id": "art-5-salles-tenue",
+        "title": "Article 5 : Respect des Lieux & Chaussures de Danse",
+        "content": "Afin de protéger les parquets des salles municipales (Salle Jeanne d'Arc, Salle 'Le Studio' Mairie, Gymnases), le port de chaussures propres réservées strictement à l'usage intérieur est obligatoire (chaussures d'extérieur strictement interdites sur la piste de danse). Une tenue confortable et une gourde sont fortement recommandées."
+      },
+      {
+        "id": "art-6-remboursement",
+        "title": "Article 6 : Rétractation & Remboursement",
+        "content": "L'engagement est annuel. Aucun remboursement de cotisation ne sera accordé en cours d'année, sauf cas de force majeure médicalement justifié (inaptitude totale et définitive certifiée par un médecin spécialiste empêchant la pratique sportive sur l'ensemble de la saison) ou déménagement professionnel à plus de 50 km, sous réserve de notification écrite au bureau."
+      },
+      {
+        "id": "art-7-droit-image",
+        "title": "Article 7 : Droit à l'Image & Données Personnelles (RGPD)",
+        "content": "Des photos ou extraits vidéo peuvent être capturés lors des événements et démonstrations à des fins de promotion associative. Tout membre peut s'y opposer par simple demande écrite à association.lamaloka@gmail.com. Vos données personnelles restent strictement confidentielles."
+      },
+      {
+        "id": "art-8-assurance",
+        "title": "Article 8 : Assurance Responsabilité Civile",
+        "content": "L'association a souscrit une police d'assurance responsabilité civile pour ses activités. Chaque adhérent est également encouragé à vérifier la couverture de son assurance responsabilité civile personnelle et garantie individuelle accident."
+      }
+    ]
+  },
+  "contactWhatsApp": "",
+  "contactPhone": "0777078569",
+  "registrationInfo": {
+    "guidelines": [
+      "Site en mode informatif : consultez les plannings, salles et tarifs officiels.",
+      "Possibilité d'un cours d'essai gratuit au début du mois de septembre.",
+      "Contactez le bureau ou venez nous rencontrer lors des forums associatifs."
+    ],
+    "bannerText": "✨ Planning et tarifs officiels 2026 - 2027 ! Retrouvez-nous aux Forums des Associations de Fontenay-le-Fleury et La Queue-lez-Yvelines.",
+    "importantDates": [
+      {
+        "date": "Samedi 5 Septembre 2026",
+        "label": "Forum des Associations de Fontenay-le-Fleury",
+        "location": "square Crevillent (10h - 18h)"
+      },
+      {
+        "date": "Lundi 5 Septembre 2026",
+        "label": "Forum des Associations de La Queue-lez-Yvelines",
+        "location": "Salle des Fêtes (10h - 17h)"
+      },
+      {
+        "date": "Lundi 14 Septembre 2026",
+        "label": "Reprise officielle de tous les cours hebdomadaires",
+        "location": "Fontenay-le-Fleury & La Queue-lez-Yvelines"
+      }
+    ],
+    "documentsRequired": [
+      "Fiche de renseignements",
+      "Certificat médical ou attestation QS-Sport"
+    ],
+    "isRegistrationOpen": false,
+    "seasonTitle": "Saison 2026 - 2027 • Informations & Plannings"
+  },
+  "contactPerson": "Elodie Vielle & Bureau de l'Association",
+  "contactEmail": "association.lamaloka@gmail.com",
+  "heroSubheadline": "Bienvenue au cœur des rythmes ensoleillés des Caraïbes. Venez partager la joie de danser la Salsa Cubaine en couple et en Rueda, ou venez vibrer et vous dépenser dans nos cours de Cardio Latino.",
+  "urgentBanner": {
+    "isDismissible": true,
+    "title": "Rentrée 2026-2027 & Forums",
+    "enabled": false,
+    "linkAction": "clases",
+    "type": "urgent",
+    "badge": "Annonce Urgente",
+    "message": "Inscriptions prioritaires ouvertes pour Salsa Cubaine & Cardio Latino à Fontenay et La Queue-les-Yvelines !",
+    "linkText": "Voir les Inscriptions"
+  },
+  "instagramUrl": "https://instagram.com/association_la_maloka",
+  "associationName": "La Maloka",
+  "locationFontenay": "Salle le Studio,  78330 Fontenay-le-Fleury",
+  "contactHours": "Du Lundi au Vendredi : 10h00 - 19h30 & Samedi : 10h00 - 13h00",
+  "postalAddress": "Association La Maloka, place du 8 m ai 1945, 78330 Fontenay-le-Fleury"
+}

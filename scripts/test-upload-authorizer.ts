@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { Readable } from 'node:stream';
+import { authorizeImageUpload, readJsonBody, verifyAdmin } from '../api/media/client-upload';
+const valid = 'la-maloka/2026-09-08/01234567-89ab-4cde-8fab-0123456789ab.jpg';
+const originalFetch = globalThis.fetch;
+let calls = 0;
+const account = (email = 'association.lamaloka@gmail.com', emailVerified = true) => { globalThis.fetch = async () => { calls++; return new Response(JSON.stringify({users:[{email,emailVerified}]}),{status:200}); }; };
+try {
+  account();
+  await assert.rejects(verifyAdmin(''),/AUTH_REQUIRED/);
+  await assert.rejects(verifyAdmin('x'.repeat(10001)),/AUTH_REQUIRED/);
+  assert.equal(calls,0);
+  for (const path of ['elsewhere/file.jpg','la-maloka/../file.jpg',valid.replace('01234567-89ab-4cde-8fab-0123456789ab','----'),valid.replace('.jpg','.svg'),valid.replace('la-maloka/','la-maloka/%2e%2e/')]) await assert.rejects(authorizeImageUpload(path,'token'),/INVALID_PATHNAME/);
+  assert.equal(calls,0);
+  account('other@example.com'); await assert.rejects(authorizeImageUpload(valid,'token'),/AUTH_FORBIDDEN/);
+  account('association.lamaloka@gmail.com',false); await assert.rejects(authorizeImageUpload(valid,'token'),/AUTH_FORBIDDEN/);
+  globalThis.fetch = async () => new Response('{}',{status:400}); await assert.rejects(authorizeImageUpload(valid,'expired'),/AUTH_FORBIDDEN/);
+  account();
+  const policy = await authorizeImageUpload(valid,'valid-token');
+  assert.deepEqual(policy.allowedContentTypes,['image/jpeg','image/png','image/webp','image/avif']);
+  assert.equal(policy.maximumSizeInBytes,5242880); assert.equal(policy.allowOverwrite,false);
+  assert.ok(!policy.tokenPayload.includes('valid-token'));
+  const body = {type:'blob.generate-client-token',payload:{pathname:valid}};
+  assert.deepEqual(await readJsonBody({body} as any),body);
+  assert.deepEqual(await readJsonBody({body:JSON.stringify(body)} as any),body);
+  assert.deepEqual(await readJsonBody(Readable.from([Buffer.from(JSON.stringify(body))]) as any),body);
+  for (const bad of [null,10,'{',JSON.stringify({data:'x'.repeat(65537)})]) await assert.rejects(readJsonBody({body:bad} as any));
+  await assert.rejects(readJsonBody(Readable.from([Buffer.alloc(65537)]) as any),/REQUEST_TOO_LARGE/);
+  console.log('Verified upload authorization: anonymous/expired/wrong/unverified identities, restricted paths, MIME and size policy, no overwrite, parsed/string/stream request bodies and oversized bodies.');
+} finally { globalThis.fetch = originalFetch; }

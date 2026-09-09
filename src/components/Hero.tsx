@@ -159,7 +159,7 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-zinc-900">
                 <StructuralImage
-                  src={content.heroImageUrl || siteSettings.heroImage || "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=1000"}
+                  src={content.heroImageUrl || siteSettings.heroImage}
                   alt="La Maloka Salsa Cubaine et Cardio Latino"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                   referrerPolicy="no-referrer"
@@ -216,7 +216,7 @@ export const Hero: React.FC<HeroProps> = ({
       {/* ========================================================= */}
       {/* THE TWO DEDICATED VIGNETTES: SALSA CUBAINE & CARDIO LATINO */}
       {/* ========================================================= */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 relative z-10">
+      {content.sections.some(section => section.id === 'disciplines' && section.visible) && activeVignettes.length > 0 && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
@@ -338,7 +338,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         </div>
 
-      </div>
+      </div>}
 
       {/* ========================================================= */}
       {/* REGISTRATION DATES & PRACTICAL INFORMATION SECTION */}
