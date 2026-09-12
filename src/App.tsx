@@ -132,6 +132,8 @@ export default function App() {
         toggleDarkMode={() => setDarkMode((current) => !current)}
         items={navigation}
         logoUrl={settings.logoUrl}
+        associationName={settings.associationName}
+        tagline={settings.tagline}
       />
 
       <main>

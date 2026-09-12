@@ -40,7 +40,7 @@ service cloud.firestore {
         && (!('moduleToggles' in request.resource.data) || request.resource.data.moduleToggles is map)
         && optionalHttps('logoUrl') && optionalHttps('heroImage') && optionalHttps('facebookUrl')
         && optionalHttps('instagramUrl') && optionalHttps('youtubeUrl');
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /courses/{id} {
       allow read: if resource.data.active == true || isAdmin();
@@ -61,7 +61,7 @@ service cloud.firestore {
         && request.resource.data.isFree is bool && request.resource.data.active is bool
         && request.resource.data.registrationButtonText is string && request.resource.data.registrationButtonText.size() <= 80
         && optionalHttps('helloAssoUrl') && validOrder(request.resource.data.order);
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /gallery/{id} {
       allow read: if resource.data.active == true || isAdmin();
@@ -75,7 +75,7 @@ service cloud.firestore {
         && request.resource.data.description is string && request.resource.data.description.size() <= 1000
         && request.resource.data.date is string && request.resource.data.date.size() <= 20
         && request.resource.data.active is bool && validOrder(request.resource.data.order);
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /events/{id} {
       allow read: if resource.data.active == true || isAdmin();
@@ -91,7 +91,7 @@ service cloud.firestore {
         && request.resource.data.price is number && request.resource.data.price >= 0
         && request.resource.data.image is string && (request.resource.data.image == '' || request.resource.data.image.matches('https://.*'))
         && optionalHttps('externalUrl') && request.resource.data.active is bool && validOrder(request.resource.data.order);
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /navigation/{id} {
       allow read: if true;
@@ -99,7 +99,7 @@ service cloud.firestore {
         && id == 'main'
         && request.resource.data.keys().hasOnly(['items'])
         && request.resource.data.items is list && request.resource.data.items.size() <= 12;
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /pages/{pageId} {
       allow read: if resource.data.published == true || isAdmin();
@@ -133,7 +133,7 @@ service cloud.firestore {
             && request.resource.data.blocks is list && request.resource.data.blocks.size() <= 12
             && request.resource.data.published is bool)
         );
-      allow delete: if isAdmin() && pageId in ['home','footer'];
+      allow delete: if false;
     }
     match /videos/{id} {
       allow read: if resource.data.active == true || isAdmin();
@@ -147,7 +147,7 @@ service cloud.firestore {
         && request.resource.data.description is string && request.resource.data.description.size() <= 1000
         && request.resource.data.date is string && request.resource.data.date.size() <= 20
         && request.resource.data.active is bool && validOrder(request.resource.data.order);
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /registration_process/{id} {
       allow read: if true;
@@ -157,7 +157,7 @@ service cloud.firestore {
         && request.resource.data.steps is list && request.resource.data.steps.size() <= 20
         && request.resource.data.finalNote is string && request.resource.data.finalNote.size() <= 1000
         && request.resource.data.visible is bool;
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /membership_terms/{id} {
       allow read: if true;
@@ -168,7 +168,7 @@ service cloud.firestore {
         && request.resource.data.lastUpdated is string && request.resource.data.lastUpdated.size() <= 80
         && request.resource.data.sections is list && request.resource.data.sections.size() <= 30
         && request.resource.data.visible is bool;
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
     match /inscriptions/{document=**} { allow read, write: if false; }
     match /health_forms/{document=**} { allow read, write: if false; }

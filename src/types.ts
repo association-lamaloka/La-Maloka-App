@@ -97,7 +97,7 @@ export interface VideoItem {
 
 export interface RegistrationProcess {
   title: string;
-  steps: Array<{ id: string; text: string; order: number }>;
+  steps: Array<{ id: string; text: string; order: number; visible?: boolean }>;
   finalNote: string;
   visible: boolean;
 }
@@ -106,7 +106,7 @@ export interface MembershipTerms {
   title: string;
   subtitle: string;
   lastUpdated: string;
-  sections: Array<{ id: string; title: string; content: string; order: number }>;
+  sections: Array<{ id: string; title: string; content: string; order: number; visible?: boolean }>;
   visible: boolean;
 }
 
@@ -227,6 +227,7 @@ export interface RegistrationInfo {
     date: string;
     label: string;
     location: string;
+    active?: boolean;
   }>;
   guidelines: string[];
   documentsRequired: string[];

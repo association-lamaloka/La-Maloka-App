@@ -13,16 +13,17 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, content }) => {
   const [showQRModal, setShowQRModal] = useState(false);
-  const email = content.email || siteSettings?.contactEmail || 'association.lamaloka@gmail.com';
-  const phone = content.phone || siteSettings?.contactPhone || '06 12 34 56 78';
-  const whatsapp = siteSettings?.contactWhatsApp || phone;
-  const contactPerson = siteSettings?.contactPerson || 'Bureau de l\'Association';
-  const hours = siteSettings?.contactHours || 'Lundi au Vendredi : 10h00 - 19h30';
-  const locationFontenay = siteSettings?.locationFontenay || 'Gymnase du Levant, Fontenay-le-Fleury (78330)';
-  const locationLaQueue = siteSettings?.locationLaQueue || 'Salle des Fêtes, La Queue-les-Yvelines (78940)';
-  const facebookUrl = content.facebookUrl || siteSettings?.facebookUrl || 'https://facebook.com/lamaloka78';
-  const instagramUrl = content.instagramUrl || siteSettings?.instagramUrl || 'https://instagram.com/association_la_maloka';
-  const youtubeUrl = content.youtubeUrl || siteSettings?.youtubeUrl || 'https://youtube.com/@lamalokadanse';
+  const email = siteSettings ? siteSettings.contactEmail : content.email;
+  const phone = siteSettings ? siteSettings.contactPhone : content.phone;
+  const whatsapp = siteSettings ? (siteSettings.contactWhatsApp ?? '') : phone;
+  const contactPerson = siteSettings ? (siteSettings.contactPerson ?? '') : 'Bureau de l\'Association';
+  const hours = siteSettings ? (siteSettings.contactHours ?? '') : 'Lundi au Vendredi : 10h00 - 19h30';
+  const postalAddress = siteSettings?.postalAddress !== undefined ? siteSettings.postalAddress : content.address;
+  const locationFontenay = siteSettings ? siteSettings.locationFontenay : 'Gymnase du Levant, Fontenay-le-Fleury (78330)';
+  const locationLaQueue = siteSettings ? siteSettings.locationLaQueue : 'Salle des Fêtes, La Queue-les-Yvelines (78940)';
+  const facebookUrl = siteSettings ? (siteSettings.facebookUrl ?? '') : content.facebookUrl;
+  const instagramUrl = siteSettings ? (siteSettings.instagramUrl ?? '') : content.instagramUrl;
+  const youtubeUrl = siteSettings ? (siteSettings.youtubeUrl ?? '') : content.youtubeUrl;
   const footerBlock = (id: string) => content.blocks.find((block) => block.id === id);
   const blockClass = (id: string) => footerBlock(id)?.visible === false ? 'hidden' : '';
   const blockOrder = (id: string) => footerBlock(id)?.order ?? 0;
@@ -51,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
                   {siteSettings?.associationName || 'LA MALOKA'}
                 </span>
                 <span className="text-[10px] text-zinc-400 font-medium block">
-                  Salsa Cubaine & Cardio Latino
+                  {siteSettings?.tagline || 'Salsa Cubaine & Cardio Latino'}
                 </span>
               </div>
             </div>
@@ -98,7 +99,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
               </div>
 
               {/* Instagram QR Code Miniature Card */}
-              <div 
+              {instagramUrl && <div
                 onClick={() => setShowQRModal(true)}
                 className="group cursor-pointer p-3 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-pink-500/20 hover:border-pink-500/40 transition-all flex items-center gap-3 shadow-lg shadow-pink-500/5"
               >
@@ -119,7 +120,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
                     Scanner @association_la_maloka
                   </p>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -130,23 +131,23 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
               <span>Contact & Renseignements</span>
             </h4>
             <div className="space-y-2 font-light">
-              <p className="text-zinc-500 text-[11px]">
+              {contactPerson && <p className="text-zinc-500 text-[11px]">
                 Référent : <span className="text-zinc-300 font-medium">{contactPerson}</span>
-              </p>
-              <a
+              </p>}
+              {email && <a
                 href={`mailto:${email}`}
                 className="flex items-center gap-2 text-zinc-300 hover:text-rose-400 transition-colors"
               >
                 <Mail size={13} className="text-rose-400 shrink-0" />
                 <span className="truncate">{email}</span>
-              </a>
-              <a
+              </a>}
+              {phone && <a
                 href={`tel:${phone.replace(/\s+/g, '')}`}
                 className="flex items-center gap-2 text-zinc-300 hover:text-emerald-400 transition-colors font-medium"
               >
                 <Phone size={13} className="text-emerald-400 shrink-0" />
                 <span>{phone}</span>
-              </a>
+              </a>}
               {whatsapp && (
                 <a
                   href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
@@ -168,21 +169,21 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
               <span>Nos Lieux de Pratique</span>
             </h4>
             <div className="space-y-2.5 font-light">
-              {content.address && <p className="text-[11px] text-zinc-300">{content.address}</p>}
-              <div className="flex items-start gap-2">
+              {postalAddress && <p className="text-[11px] text-zinc-300">{postalAddress}</p>}
+              {locationFontenay && <div className="flex items-start gap-2">
                 <span className="text-rose-400 text-xs mt-0.5 font-bold">📍</span>
                 <div>
                   <p className="font-semibold text-zinc-200">Fontenay-le-Fleury</p>
                   <p className="text-[11px] text-zinc-400">{locationFontenay}</p>
                 </div>
-              </div>
-              <div className="flex items-start gap-2">
+              </div>}
+              {locationLaQueue && <div className="flex items-start gap-2">
                 <span className="text-emerald-400 text-xs mt-0.5 font-bold">📍</span>
                 <div>
                   <p className="font-semibold text-zinc-200">La Queue-les-Yvelines</p>
                   <p className="text-[11px] text-zinc-400">{locationLaQueue}</p>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -193,7 +194,7 @@ export const Footer: React.FC<FooterProps> = ({ setCurrentTab, siteSettings, con
               <span>Permanence & Horaires</span>
             </h4>
             <div className="space-y-1.5 font-light text-[11px]">
-              <p className="text-zinc-300 font-medium">{hours}</p>
+              {hours && <p className="text-zinc-300 font-medium">{hours}</p>}
               <p className="text-zinc-500 pt-1">
                 Accueil lors des cours hebdomadaires et aux stands des Forums de rentrée.
               </p>

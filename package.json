@@ -15,7 +15,8 @@
     "test:media-security": "node scripts/check-media-security.mjs",
     "test:cms-model": "node scripts/check-cms-model.mjs",
     "test:content-fallbacks": "node --import tsx scripts/test-content-fallbacks.tsx",
-    "test:upload-authorizer": "node --import tsx scripts/test-upload-authorizer.ts"
+    "test:upload-authorizer": "node --import tsx scripts/test-upload-authorizer.ts",
+    "test:drive-image": "node --import tsx scripts/test-drive-image.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
