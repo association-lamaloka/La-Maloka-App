@@ -10,6 +10,7 @@ import { RecoveryPanel } from './RecoveryPanel';
 import { StructuralImage } from './StructuralImage';
 import { YouTubePreview } from './YouTubePreview';
 import { extractYouTubeId } from '../services/youtube';
+import { extractGoogleDriveFileId, resolvePhotoSource } from '../services/mediaUrl';
 
 type Tab = 'home' | 'navigation' | 'courses' | 'agenda' | 'media' | 'conditions' | 'footer' | 'configuration';
 interface Props { settings: SiteSettings; homePage: HomePageContent; footerContent: FooterContent; navigation: NavigationItem[]; courses: DanceClass[]; events: DanceEvent[]; photos: PhotoItem[]; videos: VideoItem[]; registration: RegistrationProcess; terms: MembershipTerms; user: User | null; authLoading: boolean; authError: string; contentError: string; onAuthorized: (user: User) => void }
@@ -309,13 +310,13 @@ function MediaForm({ kind, value, save, close }: { key?: string; kind: 'photo' |
   const setDriveLink = (nextDriveLink: string) => setDraft(current => ({ ...current, driveLink: nextDriveLink }));
   const [validation, setValidation] = useState('');
   const checkDrive = async () => {
-    const fileId = driveLink.match(/\/d\/([A-Za-z0-9_-]{20,100})/)?.[1] || new URLSearchParams(driveLink.split('?')[1] || '').get('id');
+    const fileId = extractGoogleDriveFileId(driveLink);
     if (!fileId) return setValidation('Lien Drive invalide. Utilisez le lien de partage du fichier.');
     setValidation('Vérification du partage Google Drive…');
     try {
       const response = await fetch(`/api/media/drive?fileId=${encodeURIComponent(fileId)}`);
       const result = await response.json();
-      if (!response.ok || !result.public) return setValidation(result.error || 'Rendez le fichier accessible à « Toute personne disposant du lien ».');
+      if (!response.ok || !result.public) return setValidation(`${result.error || 'La vérification automatique Drive a échoué.'} Si le partage est bien « Toute personne disposant du lien », vous pouvez tout de même enregistrer.`);
       setDraft(current => ({ ...current, url: result.url, item: { ...current.item, driveFileId: fileId } as PhotoItem })); setValidation('Image Google Drive publique et prête à être enregistrée.');
     } catch { setValidation('Impossible de vérifier Drive. Vérifiez le partage « Toute personne disposant du lien ».'); }
   };
@@ -327,8 +328,9 @@ function MediaForm({ kind, value, save, close }: { key?: string; kind: 'photo' |
       if (!id) return setValidation('URL YouTube invalide. Formats watch, youtu.be et shorts acceptés.');
       saved = await save({ ...f, youtubeId: id, youtubeUrl: `https://www.youtube.com/watch?v=${id}` } as VideoItem);
     } else {
-      if (!url.startsWith('https://')) return setValidation('Utilisez une URL HTTPS publique ou vérifiez un lien Google Drive.');
-      saved = await save({ ...f, url } as PhotoItem);
+      const source = resolvePhotoSource(url, driveLink);
+      if (!source) return setValidation(driveLink.trim() ? 'Lien Drive invalide. Utilisez le lien de partage du fichier.' : 'Choisissez une image, ajoutez une URL HTTPS ou collez un lien Google Drive.');
+      saved = await save({ ...f, ...source } as PhotoItem);
     }
     if (saved) { markSaved(); close(); }
   };
@@ -337,7 +339,7 @@ function MediaForm({ kind, value, save, close }: { key?: string; kind: 'photo' |
     {kind === 'photo' && <div className="md:col-span-2"><MediaUploader label="Photo de la galerie" currentUrl={url} onUploaded={({ url: uploadedUrl }) => { setDraft(current => ({ ...current, url: uploadedUrl, driveLink: '', item: { ...current.item, url: uploadedUrl, driveFileId: '' } as PhotoItem })); setValidation('Photo mise en ligne. Cliquez sur « Enregistrer » pour la publier.'); }} /></div>}
     <Field label="Titre" value={f.title} onChange={(title) => setF({ ...f, title })} />
     {kind === 'video' && <div className="md:col-span-2"><YouTubePreview value={url} title={f.title} /></div>}
-    <Field label={kind === 'video' ? 'URL YouTube' : 'URL HTTPS publique alternative'} type="url" value={url} onChange={setUrl} />
+    <Field label={kind === 'video' ? 'URL YouTube' : 'URL HTTPS publique alternative (facultative avec Drive)'} type="url" required={kind === 'video'} value={url} onChange={setUrl} />
     {kind === 'photo' && <div className="md:col-span-2"><Field label="Lien partagé Google Drive" required={false} value={driveLink} onChange={setDriveLink} /><button type="button" onClick={() => void checkDrive()} className="mt-2 rounded-xl border px-4 py-2">Vérifier le partage Drive</button></div>}
     <Field label="Description" required={false} value={f.description ?? ''} onChange={(description) => setF({ ...f, description })} />
     <Field label="Date" type="date" required={false} value={f.date ?? ''} onChange={(date) => setF({ ...f, date })} />
