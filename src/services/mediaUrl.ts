@@ -17,3 +17,14 @@ export function publicImageUrl(value: string): string {
   const fileId = extractGoogleDriveFileId(value);
   return fileId ? `/api/media/drive-image?fileId=${encodeURIComponent(fileId)}` : value;
 }
+
+export function resolvePhotoSource(publicUrl: string, driveLink: string): { url: string; driveFileId: string } | null {
+  const cleanDriveLink = driveLink.trim();
+  if (cleanDriveLink) {
+    const driveFileId = extractGoogleDriveFileId(cleanDriveLink);
+    return driveFileId ? { url: cleanDriveLink, driveFileId } : null;
+  }
+
+  const cleanPublicUrl = publicUrl.trim();
+  return cleanPublicUrl.startsWith('https://') ? { url: cleanPublicUrl, driveFileId: '' } : null;
+}
