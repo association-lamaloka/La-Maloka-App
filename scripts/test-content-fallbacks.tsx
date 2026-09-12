@@ -5,7 +5,7 @@ import { LandingContent } from '../src/components/LandingContent';
 import { normalizeCourses, normalizeEvents, normalizeHome, normalizePhotos, normalizeSiteSettings, normalizeVideos } from '../src/services/contentNormalization';
 import { extractYouTubeId } from '../src/services/youtube';
 import { buildRecoveryPlan, equal, isUnchangedExample, localRecoveryData } from '../src/services/contentRecovery';
-import { extractGoogleDriveFileId, publicImageUrl } from '../src/services/mediaUrl';
+import { extractGoogleDriveFileId, publicImageUrl, resolvePhotoSource } from '../src/services/mediaUrl';
 import examples from '../src/data/previous-examples.json';
 
 for (const normalize of [normalizeCourses,normalizeEvents,normalizePhotos,normalizeVideos]) {
@@ -42,6 +42,15 @@ for (const url of [`https://drive.google.com/file/d/${driveId}/view?usp=sharing`
   assert.equal(extractGoogleDriveFileId(url),driveId);
   assert.equal(publicImageUrl(url),`/api/media/drive-image?fileId=${driveId}`);
 }
+assert.deepEqual(resolvePhotoSource('', `https://drive.google.com/file/d/${driveId}/view?usp=sharing`), {
+  url: `https://drive.google.com/file/d/${driveId}/view?usp=sharing`,
+  driveFileId: driveId,
+});
+assert.deepEqual(resolvePhotoSource('https://images.example/photo.jpg', ''), {
+  url: 'https://images.example/photo.jpg',
+  driveFileId: '',
+});
+assert.equal(resolvePhotoSource('', 'https://evil.example/photo.jpg'), null);
 assert.equal(extractGoogleDriveFileId(`https://evil.example/file/d/${driveId}/view`),null);
 assert.equal(publicImageUrl('https://example.com/photo.jpg'),'https://example.com/photo.jpg');
 const before = Object.fromEntries(plan.filter(item => item.after).map(item => [item.path,item.after!]));
