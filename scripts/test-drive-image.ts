@@ -25,10 +25,15 @@ try {
   assert.equal(fetchCalls, 0, 'Un identifiant invalide ne doit jamais atteindre Google Drive.');
 
   const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
-  globalThis.fetch = async () => new Response(bytes, { status: 200, headers: { 'content-type': 'image/jpeg', 'content-length': String(bytes.byteLength) } });
+  let requestedUrl = '';
+  globalThis.fetch = async (input) => {
+    requestedUrl = String(input);
+    return new Response(bytes, { status: 200, headers: { 'content-type': 'image/jpeg', 'content-length': String(bytes.byteLength) } });
+  };
   const success = responseRecorder();
   await driveImage({ method: 'GET', url: `/api/media/drive-image?fileId=${validId}` } as IncomingMessage, success.response);
   assert.equal(success.result.statusCode, 200);
+  assert.equal(requestedUrl, `https://lh3.googleusercontent.com/d/${validId}=w2000`);
   assert.equal(success.headers.get('content-type'), 'image/jpeg');
   assert.equal(success.headers.get('x-content-type-options'), 'nosniff');
   assert.deepEqual(success.result.body, Buffer.from(bytes));
