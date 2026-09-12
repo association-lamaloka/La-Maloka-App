@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
-import { isDriveFileId } from './drive';
+import { driveImageSourceUrl, isDriveFileId } from './drive';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
@@ -40,7 +40,7 @@ export default async function handler(request: IncomingMessage, response: Server
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
   try {
-    const upstream = await fetch(`https://drive.google.com/uc?export=view&id=${encodeURIComponent(fileId)}`, {
+    const upstream = await fetch(driveImageSourceUrl(fileId), {
       redirect: 'follow',
       signal: controller.signal,
     });
