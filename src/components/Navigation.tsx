@@ -10,6 +10,8 @@ interface NavigationProps {
   toggleDarkMode: () => void;
   items?: Array<{ id: string; label: string; destination: string; order: number; active: boolean }>;
   logoUrl?: string;
+  associationName?: string;
+  tagline?: string;
 }
 const defaultItems = [
   { id: 'accueil', label: 'Accueil' },
@@ -18,7 +20,7 @@ const defaultItems = [
   { id: 'galerie', label: 'Photos & Vidéos' },
 ];
 
-export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMode, items = defaultItems.map((item, order) => ({ ...item, destination: item.id, order, active: true })), logoUrl }: NavigationProps) {
+export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMode, items = defaultItems.map((item, order) => ({ ...item, destination: item.id, order, active: true })), logoUrl, associationName, tagline }: NavigationProps) {
   const [open, setOpen] = useState(false);
 
   const navigate = (tab: string) => {
@@ -34,8 +36,8 @@ export function Navigation({ currentTab, setCurrentTab, isDarkMode, toggleDarkMo
             {logoUrl ? <StructuralImage src={logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG showText={false} className="h-full w-full" />}
           </span>
           <span>
-            <strong className="block text-xl font-black text-[#557219] dark:text-lime-400">LA MALOKA</strong>
-            <small className="hidden uppercase tracking-widest text-zinc-500 sm:block">Salsa & Cardio Latino</small>
+            <strong className="block text-xl font-black text-[#557219] dark:text-lime-400">{associationName || 'LA MALOKA'}</strong>
+            <small className="hidden uppercase tracking-widest text-zinc-500 sm:block">{tagline || 'Salsa & Cardio Latino'}</small>
           </span>
         </button>
 

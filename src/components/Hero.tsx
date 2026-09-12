@@ -23,8 +23,9 @@ export const Hero: React.FC<HeroProps> = ({
   content
 }) => {
   const [showQRModal, setShowQRModal] = useState(false);
-  const { vignettes, registrationInfo, moduleToggles } = siteSettings;
+  const { vignettes, registrationInfo } = siteSettings;
   const activeVignettes = vignettes.filter((v) => v.active);
+  const additionalSections = content.sections.filter((section) => section.visible && section.id !== 'disciplines').sort((a,b) => a.order-b.order);
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-amber-50/40 via-white to-rose-50/20 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 pb-16">
@@ -117,7 +118,7 @@ export const Hero: React.FC<HeroProps> = ({
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-100 dark:border-amber-900/40">
                 <Award size={13} className="text-amber-500" />
-                <span className="font-semibold">{content.seasonBadge}</span>
+                <span className="font-semibold">{siteSettings.season ?? content.seasonBadge}</span>
               </div>
             </motion.div>
 
@@ -186,7 +187,7 @@ export const Hero: React.FC<HeroProps> = ({
             >
               <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-2.5 rounded-2xl shadow-2xl border border-lime-300/80 dark:border-zinc-700 flex items-center gap-3">
                 <div className="w-16 h-13 sm:w-20 sm:h-16 rounded-xl overflow-hidden shadow-md bg-[#95B208] p-0.5 shrink-0">
-                  {content.logoUrl ? <StructuralImage src={content.logoUrl} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />}
+                  {content.logoUrl || siteSettings.logoUrl ? <StructuralImage src={content.logoUrl || siteSettings.logoUrl || ''} alt="" className="h-full w-full object-contain" /> : <LaMalokaOfficialLogoSVG withBackground={true} className="w-full h-full object-contain" />}
                 </div>
                 <div className="text-left pr-2">
                   <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-white">La Maloka</h4>
@@ -205,13 +206,18 @@ export const Hero: React.FC<HeroProps> = ({
               <div className="w-10 h-10 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 flex items-center justify-center text-white text-lg">{content.overlayImageUrl ? <StructuralImage src={content.overlayImageUrl} alt="" className="h-full w-full object-cover" /> : "📅"}</div>
               <div className="text-left">
                 <h4 className="text-xs font-bold text-zinc-900 dark:text-white">Forums & Inscriptions</h4>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Septembre 2026</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{registrationInfo.importantDates.find((date) => date.active !== false)?.date || registrationInfo.seasonTitle}</p>
               </div>
             </motion.div>
           </div>
 
         </div>
       </div>
+
+      {additionalSections.map((section) => <section key={section.id} className="mx-auto mt-16 max-w-4xl px-4 text-center relative z-10">
+        <p className="text-xs font-extrabold uppercase tracking-widest text-rose-500">{section.subtitle}</p>
+        <h2 className="mt-2 text-3xl font-black text-zinc-900 dark:text-white">{section.title}</h2>
+      </section>)}
 
       {/* ========================================================= */}
       {/* THE TWO DEDICATED VIGNETTES: SALSA CUBAINE & CARDIO LATINO */}
@@ -364,7 +370,7 @@ export const Hero: React.FC<HeroProps> = ({
 
               {/* List of Important Dates */}
               <div className="space-y-3">
-                {registrationInfo.importantDates.map((d, i) => (
+                {registrationInfo.importantDates.filter((d) => d.active !== false).map((d, i) => (
                   <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-white/5 border border-white/10">
                     <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 font-mono text-xs font-bold">
                       {i + 1}
@@ -445,10 +451,10 @@ export const Hero: React.FC<HeroProps> = ({
               <h4 className="text-lg md:text-xl font-black text-zinc-900 dark:text-white">
                 Nous sommes à votre disposition pour vous renseigner
               </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-light">
+              {(siteSettings.contactPerson || siteSettings.contactHours) && <p className="text-xs text-zinc-500 dark:text-zinc-400 font-light">
                 {siteSettings.contactPerson ? `Interlocuteur : ${siteSettings.contactPerson} • ` : ''}
-                {siteSettings.contactHours || 'Permanence du Lundi au Samedi'}
-              </p>
+                {siteSettings.contactHours ?? ''}
+              </p>}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -485,13 +491,13 @@ export const Hero: React.FC<HeroProps> = ({
               )}
 
               {/* Instagram QR Code Trigger */}
-              <button
+              {siteSettings.instagramUrl && <button
                 onClick={() => setShowQRModal(true)}
                 className="px-4 py-2.5 bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-amber-500/10 hover:from-pink-500/20 hover:to-amber-500/20 text-pink-600 dark:text-pink-400 font-bold rounded-xl text-xs flex items-center gap-2 border border-pink-200 dark:border-pink-900/50 transition-all cursor-pointer shadow-sm shadow-pink-500/5"
               >
                 <QrCode size={14} className="text-pink-500" />
                 <span>Instagram QR</span>
-              </button>
+              </button>}
             </div>
 
           </div>
@@ -499,12 +505,12 @@ export const Hero: React.FC<HeroProps> = ({
       </div>
 
       {/* Instagram QR Code Modal */}
-      <InstagramQRModal
+      {siteSettings.instagramUrl && <InstagramQRModal
         isOpen={showQRModal}
         onClose={() => setShowQRModal(false)}
-        instagramUrl={siteSettings.instagramUrl || 'https://instagram.com/association_la_maloka'}
+        instagramUrl={siteSettings.instagramUrl}
         accountHandle="@association_la_maloka"
-      />
+      />}
 
     </div>
   );

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const upload = readFileSync(new URL('../api/media/client-upload.ts', import.meta.url), 'utf8');
 const drive = readFileSync(new URL('../api/media/drive.ts', import.meta.url), 'utf8');
+const driveImage = readFileSync(new URL('../api/media/drive-image.ts', import.meta.url), 'utf8');
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
 const uploader = readFileSync(new URL('../src/components/MediaUploader.tsx', import.meta.url), 'utf8');
@@ -16,6 +17,10 @@ assert.match(upload, /handleUpload/, 'Le endpoint doit utiliser le flux officiel
 assert.match(upload, /maximumSizeInBytes: MAX_IMAGE_SIZE/);
 assert.match(upload, /\^la-maloka\\\//, 'Tous les objets Blob doivent rester sous le préfixe la-maloka/.');
 assert.match(drive, /\^\[A-Za-z0-9_-\]\{20,100\}\$/, 'Le fileId Drive doit être strictement validé.');
+assert.match(driveImage, /ALLOWED_IMAGE_TYPES/, 'Le proxy Drive doit limiter les formats d’image.');
+assert.match(driveImage, /MAX_IMAGE_SIZE/, 'Le proxy Drive doit limiter les images à 5 Mo.');
+assert.match(driveImage, /AbortController/, 'Le proxy Drive doit abandonner les requêtes bloquées.');
+assert.doesNotMatch(driveImage, /authorization|BLOB_READ_WRITE_TOKEN/, 'Le proxy Drive public ne doit exposer aucun secret.');
 assert.match(rules, /match \/navigation\/{id}/);
 assert.match(rules, /driveFileId\.matches\('\^\[A-Za-z0-9_-\]\{20,100\}\$'\)/);
 assert.match(env, /^BLOB_READ_WRITE_TOKEN=$/m);

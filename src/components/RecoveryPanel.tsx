@@ -32,7 +32,7 @@ export function RecoveryPanel() {
           const item = chosen[index];
           if (!equal(snapshot.exists() ? snapshot.data() : null, item.before)) throw new Error('CONTENT_CHANGED');
         });
-        chosen.forEach(item => item.after ? transaction.set(doc(db,item.path),item.after) : transaction.delete(doc(db,item.path)));
+        chosen.forEach(item => transaction.set(doc(db,item.path),item.after));
       });
       setChanges([]); setSelected([]); setStatus('Récupération enregistrée. Les photos, vidéos et cours récupérés sont en brouillon : ouvrez-les pour les vérifier et les publier.');
     } catch (error) { setStatus(error instanceof Error && error.message === 'CONTENT_CHANGED' ? 'Le contenu a changé depuis la comparaison. Relancez la recherche avant de réessayer.' : 'Récupération non enregistrée. Vérifiez que les règles Firestore mises à jour sont publiées. Aucun changement partiel n’a été appliqué.'); }
@@ -45,7 +45,7 @@ export function RecoveryPanel() {
     {status && <p role="status">{status}</p>}
     {changes.map(item => <div key={item.path} className="rounded-xl border p-3">
       <label className="flex gap-3"><input type="checkbox" checked={selected.includes(item.path)} disabled={busy} onChange={event => setSelected(current => event.target.checked ? [...current,item.path] : current.filter(path => path !== item.path))} /><span>{item.reason} — {String(item.after?.title || item.after?.name || item.path)}</span></label>
-      <details className="mt-2"><summary>Voir les valeurs avant / après</summary><div className="grid gap-3 md:grid-cols-2"><pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(item.before,null,2)}</pre><pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs">{item.after ? JSON.stringify(item.after,null,2) : 'Suppression de cet exemple'}</pre></div></details>
+      <details className="mt-2"><summary>Voir les valeurs avant / après</summary><div className="grid gap-3 md:grid-cols-2"><pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(item.before,null,2)}</pre><pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(item.after,null,2)}</pre></div></details>
     </div>)}
     {changes.length > 0 && <button type="button" disabled={busy || !selected.length} onClick={apply} className="rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-50">Appliquer les {selected.length} changements sélectionnés</button>}
   </section>;

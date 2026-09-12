@@ -63,7 +63,7 @@ export const ScrollingTopBanner: React.FC<ScrollingTopBannerProps> = ({
   ];
 
   // If custom importantDates are configured, format them
-  const customDates = registrationInfo?.importantDates?.map((d, index) => ({
+  const customDates = registrationInfo?.importantDates?.filter((d) => d.active !== false).map((d, index) => ({
     date: d.date,
     time: 'Rentrée 2026',
     title: d.label,

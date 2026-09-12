@@ -2,7 +2,7 @@ import recovered from '../data/recovered-public-settings.json';
 import examples from '../data/previous-examples.json';
 import { extractYouTubeId } from './youtube';
 
-export interface RecoveryChange { path: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null; reason: string }
+export interface RecoveryChange { path: string; before: Record<string, unknown> | null; after: Record<string, unknown>; reason: string }
 const object = (value: unknown): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, any> : {};
 const list = (value: unknown): Record<string, any>[] => Array.isArray(value) ? value.map(object) : [];
 export const equal = (a: unknown, b: unknown): boolean => {
@@ -33,11 +33,11 @@ export function isUnchangedExample(name: string, record: Record<string, any>) {
 
 export function buildRecoveryPlan(current: Record<string, Record<string, any>>, local: ReturnType<typeof localRecoveryData>): RecoveryChange[] {
   const changes = new Map<string, RecoveryChange>();
-  const propose = (path: string, after: Record<string, any> | null, reason: string) => { const before = current[path] || null; if (!equal(before, after)) changes.set(path, { path, before, after, reason }); };
-  // No automatic deletion: these proposals must be individually reviewable in ÉQUIPE.
+  const propose = (path: string, after: Record<string, any>, reason: string) => { const before = current[path] || null; if (!equal(before, after)) changes.set(path, { path, before, after, reason }); };
+  // Example records are archived, never deleted, so every recovery action remains reversible.
   for (const [path, value] of Object.entries(current)) {
     const [name, id] = path.split('/');
-    if (isUnchangedExample(name, { ...value, id })) propose(path, null, 'Donnée d’exemple inchangée');
+    if (isUnchangedExample(name, { ...value, id })) propose(path, { ...value, active: false }, 'Donnée d’exemple inchangée — archivage réversible');
   }
   const old = { ...recovered, ...object(local.settings) };
   const settingsPath = 'site_settings/global';
@@ -82,7 +82,7 @@ export function buildRecoveryPlan(current: Record<string, Record<string, any>>, 
   for (const plan of list(old.pricingPlans)) {
     if (!safeId(plan.classId)) continue;
     const path = `courses/${plan.classId}`;
-    if ((current[path] && !changes.has(path)) || changes.get(path)?.after) continue;
+    if ((current[path] && !changes.has(path)) || changes.has(path)) continue;
     propose(path, { id:plan.classId,name:`${text(plan.discipline)} — ${text(plan.level)}`,description:text(plan.notes),category:text(plan.discipline),level:text(plan.level),instructor:'',schedule:`${text(plan.day)} ${text(plan.time)}`,location:`${text(plan.room)} · ${text(plan.location)}`,image:'',season:'2026-2027',priceMonthly:0,annualPrice:Number(plan.price) || 0,isFree:Number(plan.price) === 0,helloAssoUrl:text(plan.helloAssoUrl),registrationButtonText:'S’inscrire',active:false,order:changes.size }, 'Tarif et horaire retrouvés — cours en brouillon à compléter');
   }
   return [...changes.values()];
